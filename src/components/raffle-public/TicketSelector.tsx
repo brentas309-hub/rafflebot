@@ -36,39 +36,42 @@ export default function TicketSelector({
   referralCode,
   onPurchaseSuccess
 }: TicketSelectorProps) {
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   const ticketTotal = raffle.ticket_price * selectedQuantity;
 
+  // ✅ STRIPE CHECKOUT FUNCTION
   const handleBuyTickets = async () => {
     setIsProcessing(true);
 
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/purchase-tickets`;
+      const totalAmount = raffle.ticket_price * selectedQuantity;
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          raffle_id: raffle.id,
-          quantity: selectedQuantity,
-          referral_code: referralCode
-        })
-      });
+      const res = await fetch(
+        "https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: totalAmount,
+          }),
+        }
+      );
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
+      if (data.url) {
+        window.location.href = data.url;
       } else {
-        throw new Error('No checkout URL received');
+        throw new Error("No checkout URL returned");
       }
+
     } catch (error) {
-      console.error('Error initiating purchase:', error);
-      alert('Unable to process purchase. Please try again.');
+      console.error("Error initiating checkout:", error);
+      alert("Unable to process checkout. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -104,7 +107,9 @@ export default function TicketSelector({
             )}
             <div className="text-5xl font-black mb-2">{option.quantity}</div>
             <div className="text-sm font-semibold opacity-90 mb-3">{option.label}</div>
-            <div className="text-2xl font-black">${(raffle.ticket_price * option.quantity).toFixed(2)}</div>
+            <div className="text-2xl font-black">
+              ${(raffle.ticket_price * option.quantity).toFixed(2)}
+            </div>
           </button>
         ))}
       </div>
@@ -112,7 +117,9 @@ export default function TicketSelector({
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 mb-8 shadow-xl">
         <div className="flex justify-between items-center">
           <span className="text-white text-2xl font-bold">Total</span>
-          <span className="text-5xl font-black text-yellow-400">${ticketTotal.toFixed(2)}</span>
+          <span className="text-5xl font-black text-yellow-400">
+            ${ticketTotal.toFixed(2)}
+          </span>
         </div>
       </div>
 

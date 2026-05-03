@@ -6,6 +6,7 @@ interface RaffleData {
   title: string;
   ticket_price: number;
   processing_fee_mode: 'buyer_pays' | 'club_absorbs';
+  slug: string; // ✅ IMPORTANT (we use this now)
 }
 
 interface RaffleStats {
@@ -17,8 +18,8 @@ interface TicketSelectorProps {
   stats: RaffleStats;
   selectedQuantity: number;
   onQuantityChange: (quantity: number) => void;
-  referralCode: string | null;
-  onPurchaseSuccess: (purchaseId: string) => void;
+  referralCode?: string | null;
+  onPurchaseSuccess?: (purchaseId: string) => void;
 }
 
 const TICKET_OPTIONS = [
@@ -33,20 +34,19 @@ export default function TicketSelector({
   stats,
   selectedQuantity,
   onQuantityChange,
-  referralCode,
-  onPurchaseSuccess
 }: TicketSelectorProps) {
 
   const [isProcessing, setIsProcessing] = useState(false);
 
   const ticketTotal = raffle.ticket_price * selectedQuantity;
 
-  // ✅ STRIPE CHECKOUT FUNCTION
+  // ✅ STRIPE CHECKOUT FUNCTION (FIXED)
   const handleBuyTickets = async () => {
     setIsProcessing(true);
 
     try {
-      const totalAmount = raffle.ticket_price * selectedQuantity;
+      console.log("🎟️ Sending quantity:", selectedQuantity);
+      console.log("🎟️ Sending slug:", raffle.slug); // 🔥 DEBUG
 
       const res = await fetch(
         "https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/create-checkout-session",
@@ -56,21 +56,24 @@ export default function TicketSelector({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: totalAmount,
+            quantity: selectedQuantity,
+            raffle_slug: raffle.slug, // ✅ FIXED HERE
           }),
         }
       );
 
       const data = await res.json();
 
+      console.log("🔥 Checkout response:", data);
+
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error("No checkout URL returned");
+        throw new Error(data.error || "No checkout URL returned");
       }
 
     } catch (error) {
-      console.error("Error initiating checkout:", error);
+      console.error("❌ Error initiating checkout:", error);
       alert("Unable to process checkout. Please try again.");
       setIsProcessing(false);
     }
@@ -78,7 +81,9 @@ export default function TicketSelector({
 
   return (
     <div className="bg-white rounded-3xl p-8 shadow-2xl mb-6">
-      <h2 className="text-3xl font-black text-slate-900 mb-8 text-center">Select Your Tickets</h2>
+      <h2 className="text-3xl font-black text-slate-900 mb-8 text-center">
+        Select Your Tickets
+      </h2>
 
       <div className="grid grid-cols-2 gap-4 mb-8">
         {TICKET_OPTIONS.map((option) => (
@@ -97,16 +102,25 @@ export default function TicketSelector({
             }`}
           >
             {option.popular && (
-              <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-md ${
-                selectedQuantity === option.quantity
-                  ? 'bg-yellow-400 text-slate-900'
-                  : 'bg-slate-200 text-slate-700'
-              }`}>
+              <div
+                className={`absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-md ${
+                  selectedQuantity === option.quantity
+                    ? 'bg-yellow-400 text-slate-900'
+                    : 'bg-slate-200 text-slate-700'
+                }`}
+              >
                 Most Popular
               </div>
             )}
-            <div className="text-5xl font-black mb-2">{option.quantity}</div>
-            <div className="text-sm font-semibold opacity-90 mb-3">{option.label}</div>
+
+            <div className="text-5xl font-black mb-2">
+              {option.quantity}
+            </div>
+
+            <div className="text-sm font-semibold opacity-90 mb-3">
+              {option.label}
+            </div>
+
             <div className="text-2xl font-black">
               ${(raffle.ticket_price * option.quantity).toFixed(2)}
             </div>

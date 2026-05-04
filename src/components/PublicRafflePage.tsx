@@ -9,10 +9,16 @@ type RaffleRow = {
   id: string;
   title: string;
   ticket_price: number | string;
+  total_tickets?: number | string | null;
   slug: string | null;
   processing_fee_mode?: "buyer_pays" | "club_absorbs" | null;
   description?: string | null;
   prize_description?: string | null;
+};
+
+type RaffleStatsRow = {
+  tickets_remaining: number | string;
+  total_raised_cents: number | string | bigint;
 };
 
 export default function PublicRafflePage() {
@@ -23,6 +29,7 @@ export default function PublicRafflePage() {
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
   const [raffle, setRaffle] = useState<RaffleRow | null>(null);
   const [ticketsRemaining, setTicketsRemaining] = useState(0);
+  const [totalRaisedCents, setTotalRaisedCents] = useState(0);
   const [statsLoadFailed, setStatsLoadFailed] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
@@ -33,6 +40,7 @@ export default function PublicRafflePage() {
       setLoadStatus("loading");
       setRaffle(null);
       setStatsLoadFailed(false);
+      setTotalRaisedCents(0);
 
       const slug = raffleSlug?.trim();
       const id = raffleId?.trim();
@@ -75,11 +83,16 @@ export default function PublicRafflePage() {
       if (statsError || !statsRows?.length) {
         setStatsLoadFailed(true);
         setTicketsRemaining(0);
+        setTotalRaisedCents(0);
       } else {
-        const statsRow = statsRows[0] as { tickets_remaining: number | string };
+        const statsRow = statsRows[0] as RaffleStatsRow;
         const remaining = Number(statsRow.tickets_remaining);
         setTicketsRemaining(
           Number.isFinite(remaining) ? Math.max(0, remaining) : 0
+        );
+        const raisedCents = Number(statsRow.total_raised_cents);
+        setTotalRaisedCents(
+          Number.isFinite(raisedCents) ? Math.max(0, raisedCents) : 0
         );
       }
 
@@ -151,6 +164,17 @@ export default function PublicRafflePage() {
     slug: raffle.slug ?? "",
   };
 
+  const totalTicketsRaw = Number(raffle.total_tickets);
+  const totalTickets = Number.isFinite(totalTicketsRaw)
+    ? Math.max(0, totalTicketsRaw)
+    : 0;
+  const goalDollars = totalTickets * safePrice;
+  const raisedDollars = totalRaisedCents / 100;
+  const raisedPct =
+    goalDollars > 0
+      ? Math.min(100, Math.max(0, (raisedDollars / goalDollars) * 100))
+      : 0;
+
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-lg mx-auto">
@@ -183,6 +207,29 @@ export default function PublicRafflePage() {
         {statsLoadFailed ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 p-4 mb-6 text-sm font-medium text-center">
             Unable to load ticket availability. Refresh the page and try again.
+          </div>
+        ) : null}
+
+        {!statsLoadFailed ? (
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-center text-sm font-semibold text-slate-800 mb-3">
+              ${raisedDollars.toFixed(2)} raised out of ${goalDollars.toFixed(2)}{" "}
+              goal
+            </p>
+            {goalDollars > 0 ? (
+              <div
+                className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={Math.round(raisedPct)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
+                  style={{ width: `${raisedPct}%` }}
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
 

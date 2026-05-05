@@ -16,35 +16,6 @@ interface PurchaseRequest {
   buyer_phone?: string;
 }
 
-/** Stripe redirect base: localhost when developing; production site otherwise (never rafflebot.com). */
-const LIVE_SITE = "https://getrafflebot.com";
-
-function stripeRedirectBaseUrl(req: Request): string {
-  const origin = req.headers.get("origin");
-  if (origin) {
-    try {
-      const host = new URL(origin).hostname.toLowerCase();
-      if (host === "localhost" || host === "127.0.0.1") {
-        return origin.replace(/\/+$/, "");
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  const env =
-    Deno.env.get("SITE_URL")?.trim() ||
-    Deno.env.get("PUBLIC_SITE_URL")?.trim();
-  if (env) {
-    try {
-      const u = new URL(env.includes("://") ? env : `https://${env}`);
-      return u.origin.replace(/\/+$/, "");
-    } catch {
-      /* ignore */
-    }
-  }
-  return LIVE_SITE;
-}
-
 async function purchaseTickets(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -117,9 +88,8 @@ async function purchaseTickets(req: Request): Promise<Response> {
       );
     }
 
-    const baseUrl = stripeRedirectBaseUrl(req);
-    const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${baseUrl}/r/${raffle.slug}`;
+    const successUrl = `${req.headers.get('origin') || 'https://rafflebot.com'}/r/${raffle.slug}/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${req.headers.get('origin') || 'https://rafflebot.com'}/r/${raffle.slug}`;
 
     const checkoutSessionData = {
       payment_method_types: ['card'],

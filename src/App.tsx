@@ -14,6 +14,7 @@ import { LegalDetails } from "./components/onboarding/LegalDetails";
 import { ConnectStripe } from "./components/onboarding/ConnectStripe";
 import { RaffleDefaults } from "./components/onboarding/RaffleDefaults";
 import { CompletionPage } from "./components/onboarding/CompletionPage";
+import RafflePreview from './components/onboarding/RafflePreview';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
 
       <Route path="/onboarding/create-raffle" element={<CreateRaffleStep />} />
       <Route path="/onboarding/organisation" element={<OrganisationDetails />} />
+      <Route path="/onboarding/preview" element={<RafflePreview />} />
 
       <Route path="/onboarding" element={<OnboardingShell />}>
         <Route path="intro" element={<VideoIntro />} />

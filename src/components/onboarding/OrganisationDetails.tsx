@@ -16,8 +16,8 @@ export function OrganisationDetails() {
     if (!orgName || !name || !email) return;
 
     // ✅ Pass raffle name forward to dashboard
-    navigate('/dashboard', {
-      state: { raffleName }
+    navigate('/onboarding/preview', {
+      state: { raffleName, orgName, email }
     });
   };
 

@@ -15,6 +15,10 @@ export const ConnectStripe: React.FC = () => {
         'https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/create-connect-account',
         {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
         }
       );
 

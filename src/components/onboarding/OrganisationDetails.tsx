@@ -14,8 +14,11 @@ export function OrganisationDetails() {
 
   const handleContinue = () => {
     if (!orgName || !name || !email) return;
-
-    // ✅ Pass raffle name forward to dashboard
+    // Save to localStorage so data survives Stripe redirect
+    localStorage.setItem('orgName', orgName);
+    localStorage.setItem('contactName', name);
+    localStorage.setItem('email', email);
+    // Pass raffle name forward to dashboard
     navigate('/onboarding/preview', {
       state: { raffleName, orgName, email }
     });

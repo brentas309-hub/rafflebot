@@ -30,7 +30,7 @@ export const ConnectStripe: React.FC = () => {
         return;
       }
 
-      // 🔥 Save account ID (we’ll use later for payments)
+      // 🔥 Save account ID (we'll use later for payments)
       localStorage.setItem('stripeAccountId', stripeData.accountId);
 
       // 🔥 Redirect to Stripe onboarding
@@ -39,6 +39,41 @@ export const ConnectStripe: React.FC = () => {
     } catch (err) {
       console.error('Stripe connect error:', err);
       alert('Stripe connection failed');
+    }
+
+
+    try {
+      const res = await fetch(
+        'https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/create-connect-account',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const stripeData = await res.json();
+
+      if (!stripeData?.url) {
+        console.error('Stripe error:', stripeData);
+        alert('Something went wrong connecting Stripe. Please try again.');
+        return;
+      }
+
+      // Save all onboarding data to localStorage before leaving the site
+      localStorage.setItem('stripeAccountId', stripeData.accountId);
+      localStorage.setItem('raffleName', data.raffleName || '');
+      localStorage.setItem('orgName', data.orgName || '');
+      localStorage.setItem('contactName', data.contactName || '');
+      localStorage.setItem('email', data.email || '');
+
+      // Redirect to Stripe onboarding
+      window.location.href = stripeData.url;
+
+    } catch (err) {
+      console.error('Stripe connect error:', err);
+      alert('Stripe connection failed. Please try again.');
     }
   };
 

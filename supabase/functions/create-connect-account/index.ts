@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       body: new URLSearchParams({
         account: account.id,
         refresh_url: 'https://getrafflebot.com/onboarding/payments',
-        return_url: 'https://getrafflebot.com/onboarding/preview',
+        return_url: 'https://getrafflebot.com/onboarding/stripe-success',
         type: 'account_onboarding',
       }).toString(),
     });

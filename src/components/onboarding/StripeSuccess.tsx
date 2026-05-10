@@ -82,6 +82,14 @@ export default function StripeSuccess() {
           </label>
         </div>
 
+        <button
+          disabled={!agreed}
+          onClick={() => navigate('/onboarding/create-account')}
+          className={`w-full py-3 rounded-xl font-semibold transition ${agreed ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+        >
+          Create login to start your raffle
+        </button>
+
       </div>
     </div>
   );

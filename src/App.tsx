@@ -16,6 +16,7 @@ import { RaffleDefaults } from "./components/onboarding/RaffleDefaults";
 import { CompletionPage } from "./components/onboarding/CompletionPage";
 import RafflePreview from './components/onboarding/RafflePreview';
 import StripeSuccess from './components/onboarding/StripeSuccess';
+import CreateAccount from './components/onboarding/CreateAccount';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/onboarding/organisation" element={<OrganisationDetails />} />
       <Route path="/onboarding/preview" element={<RafflePreview />} />
       <Route path="/onboarding/stripe-success" element={<StripeSuccess />} />
+      <Route path="/onboarding/create-account" element={<CreateAccount />} />
 
       <Route path="/onboarding" element={<OnboardingShell />}>
         <Route path="intro" element={<VideoIntro />} />

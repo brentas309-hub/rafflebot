@@ -57,6 +57,7 @@ export default function CreateAccount() {
 
         // Save raffle
         await supabase.from('raffles').insert({
+          owner_user_id: userId,
           title: raffleName,
           slug: slug,
           ticket_price: 5,

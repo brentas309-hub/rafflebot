@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertCircle, Lock, Copy, Check, Send, Users } from 'lucide-react';
 import { getRaffleById, getRaffleStats, updateRaffleStatus, getWinner, getDrawAudit } from '../services/raffleService';
 import { createDrawSession, executeDrawWinner } from '../services/drawService';
+import { supabase } from '../lib/supabase';
 import DrawModal from './DrawModal';
 import RafflebotLogo from './RafflebotLogo';
 
@@ -21,6 +22,7 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
   const [coachMobile, setCoachMobile] = useState('');
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
+  const [purchases, setPurchases] = useState<any[]>([]);
 
   useEffect(() => {
     loadRaffleData();
@@ -36,13 +38,27 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
       const statsData = await getRaffleStats(raffleId);
       setStats(statsData);
 
-      const winnerData = await getWinner(raffleId);
-      setWinner(winnerData);
+      try {
+        const winnerData = await getWinner(raffleId);
+        setWinner(winnerData);
+      } catch {
+        // winners table not yet created
+      }
+      loadPurchases();
     } catch (error) {
       console.error('Failed to load raffle:', error);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadPurchases() {
+    const { data } = await supabase
+      .from('purchases')
+      .select('email, quantity, amount, created_at')
+      .eq('raffle_id', raffleId)
+      .order('created_at', { ascending: false });
+    setPurchases(data ?? []);
   }
 
   async function handleStatusChange(newStatus: string) {
@@ -300,6 +316,38 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
             </div>
           </div>
         )}
+
+        <div className="bg-white rounded-lg shadow p-8 mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Ticket Buyers</h2>
+          {purchases.length === 0 ? (
+            <div className="bg-slate-50 rounded-lg p-6 text-center">
+              <p className="text-slate-600">No tickets sold yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 px-4 text-slate-600 font-medium">Email</th>
+                    <th className="text-left py-3 px-4 text-slate-600 font-medium">Tickets</th>
+                    <th className="text-left py-3 px-4 text-slate-600 font-medium">Amount</th>
+                    <th className="text-left py-3 px-4 text-slate-600 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.map((p, i) => (
+                    <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-3 px-4 text-slate-900">{p.email}</td>
+                      <td className="py-3 px-4 text-slate-900">{p.quantity}</td>
+                      <td className="py-3 px-4 text-slate-900">${(p.amount / 100).toFixed(2)}</td>
+                      <td className="py-3 px-4 text-slate-500">{new Date(p.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         <div className="bg-white rounded-lg shadow p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Audit Log</h2>

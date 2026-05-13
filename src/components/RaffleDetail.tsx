@@ -60,7 +60,7 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
     setShowDrawModal(true);
   }
 
-  const raffleLink = `${window.location.origin}/public-raffle/${raffleId}`;
+  const raffleLink = `${window.location.origin}/raffle/${(raffle as any)?.slug || raffleId}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(raffleLink);

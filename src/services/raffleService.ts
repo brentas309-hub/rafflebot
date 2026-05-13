@@ -157,20 +157,24 @@ export async function updateRaffleStatus(
 }
 
 export async function getRaffleStats(raffleId: string) {
-  const { data: raffle } = await getRaffleById(raffleId);
-  if (!raffle) throw new Error('Raffle not found');
+  const raffleData = await getRaffleById(raffleId);
+  if (!raffleData) throw new Error('Raffle not found');
 
-  const { data: tickets } = await supabase
-    .from('tickets')
-    .select('status')
+  const { data: purchases } = await supabase
+    .from('purchases')
+    .select('quantity, amount')
     .eq('raffle_id', raffleId);
 
+  const totalTickets = raffleData.total_tickets || 0;
+  const sold = purchases?.reduce((sum, p) => sum + (p.quantity || 0), 0) || 0;
+  const revenue = purchases?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+  const available = totalTickets - sold;
+
   const stats = {
-    total: raffle.total_tickets,
-    available: tickets?.filter(t => t.status === 'available').length || 0,
-    reserved: tickets?.filter(t => t.status === 'reserved').length || 0,
-    sold: tickets?.filter(t => t.status === 'sold').length || 0,
-    revenue: (tickets?.filter(t => t.status === 'sold').length || 0) * Number(raffle.ticket_price),
+    total: totalTickets,
+    sold,
+    available,
+    revenue: revenue / 100,
   };
 
   return stats;

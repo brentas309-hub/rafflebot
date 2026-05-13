@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { createRaffle, generateTickets } from '../services/raffleService';
+import { createRaffle } from '../services/raffleService';
 import RaffleManagement from './RaffleManagement';
 
 interface Props {
@@ -43,7 +43,6 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
       const goalAmount = formData.goalAmount ? parseFloat(formData.goalAmount) : undefined;
 
       const raffle = await createRaffle(
-        '00000000-0000-0000-0000-000000000001',
         formData.title,
         formData.description,
         formData.totalTickets,
@@ -53,11 +52,10 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
         goalAmount
       );
 
-      await generateTickets(raffle.id, formData.totalTickets);
-
       setCreatedRaffle({ id: raffle.id, title: raffle.title });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create raffle');
+      console.error('Full error:', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
     } finally {
       setLoading(false);
     }

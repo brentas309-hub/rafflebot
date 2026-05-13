@@ -4,7 +4,6 @@ import { Database } from '../lib/supabase';
 type Raffle = Database['public']['Tables']['raffles']['Row'];
 
 export async function createRaffle(
-  clubId: string,
   title: string,
   description: string,
   totalTickets: number,
@@ -17,12 +16,11 @@ export async function createRaffle(
   if (!user) throw new Error('Not authenticated');
 
   const insertData: any = {
-    club_id: clubId,
     title,
     description,
     total_tickets: totalTickets,
     ticket_price: ticketPrice.toString(),
-    created_by: user.id,
+    owner_user_id: user.id,
     draw_mode: drawMode,
   };
 
@@ -106,9 +104,13 @@ export async function generateTickets(raffleId: string, totalTickets: number) {
 }
 
 export async function getRaffles() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
   const { data, error } = await supabase
     .from('raffles')
     .select('*')
+    .eq('owner_user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) throw error;

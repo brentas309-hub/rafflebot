@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import { Copy, Check, Send, Users } from 'lucide-react';
 
 interface Props {
-  raffleId: string;
   raffleTitle: string;
+  raffleSlug: string;
   onClose: () => void;
 }
 
-export default function RaffleManagement({ raffleId, raffleTitle, onClose }: Props) {
+export default function RaffleManagement({ raffleTitle, raffleSlug, onClose }: Props) {
   const [coachName, setCoachName] = useState('');
   const [coachMobile, setCoachMobile] = useState('');
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const raffleLink = `${window.location.origin}/public-raffle/${raffleId}`;
+  const raffleLink = `${window.location.origin}/raffle/${raffleSlug}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(raffleLink);

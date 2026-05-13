@@ -21,7 +21,7 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [createdRaffle, setCreatedRaffle] = useState<{ id: string; title: string } | null>(null);
+  const [createdRaffle, setCreatedRaffle] = useState<{ id: string; title: string; slug: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +52,8 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
         goalAmount
       );
 
-      setCreatedRaffle({ id: raffle.id, title: raffle.title });
+      const raffleAny = raffle as any;
+      setCreatedRaffle({ id: raffle.id, title: raffle.title, slug: raffleAny.slug ?? raffle.id });
     } catch (err) {
       console.error('Full error:', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -64,8 +65,8 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
   if (createdRaffle) {
     return (
       <RaffleManagement
-        raffleId={createdRaffle.id}
         raffleTitle={createdRaffle.title}
+        raffleSlug={createdRaffle.slug}
         onClose={() => {
           setCreatedRaffle(null);
           onCreated();

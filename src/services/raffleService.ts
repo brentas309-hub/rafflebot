@@ -3,6 +3,15 @@ import { Database } from '../lib/supabase';
 
 type Raffle = Database['public']['Tables']['raffles']['Row'];
 
+function generateSlug(title: string): string {
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  const random = Math.random().toString(36).substring(2, 7);
+  return `${base}-${random}`;
+}
+
 export async function createRaffle(
   title: string,
   description: string,
@@ -15,6 +24,8 @@ export async function createRaffle(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
+  const slug = generateSlug(title);
+
   const insertData: any = {
     title,
     description,
@@ -22,6 +33,7 @@ export async function createRaffle(
     ticket_price: ticketPrice.toString(),
     owner_user_id: user.id,
     draw_mode: drawMode,
+    slug,
   };
 
   if (drawTimestamp) {
@@ -35,11 +47,12 @@ export async function createRaffle(
   const { data, error } = await supabase
     .from('raffles')
     .insert(insertData)
-    .select()
+    .select('*')
     .single();
 
   if (error) throw error;
-  return data;
+
+  return { ...(data as any), slug: (data as any)?.slug ?? slug } as Raffle;
 }
 
 export async function generateTickets(raffleId: string, totalTickets: number) {

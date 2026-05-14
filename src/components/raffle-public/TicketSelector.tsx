@@ -37,11 +37,18 @@ export default function TicketSelector({
 }: TicketSelectorProps) {
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [buyerName, setBuyerName] = useState('');
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerPhone, setBuyerPhone] = useState('');
 
   const ticketTotal = raffle.ticket_price * selectedQuantity;
 
   // ✅ STRIPE CHECKOUT FUNCTION (FIXED)
   const handleBuyTickets = async () => {
+    if (!buyerName || !buyerEmail || !buyerPhone) {
+      alert('Please fill in your name, email and phone number');
+      return;
+    }
     setIsProcessing(true);
 
     try {
@@ -57,7 +64,10 @@ export default function TicketSelector({
           },
           body: JSON.stringify({
             quantity: selectedQuantity,
-            raffle_slug: raffle.slug, // ✅ FIXED HERE
+            raffle_slug: raffle.slug,
+            buyer_name: buyerName,
+            buyer_email: buyerEmail,
+            buyer_phone: buyerPhone,
           }),
         }
       );
@@ -135,6 +145,30 @@ export default function TicketSelector({
             ${ticketTotal.toFixed(2)}
           </span>
         </div>
+      </div>
+
+      <div className="space-y-3 mb-6">
+        <input
+          type="text"
+          placeholder="Your full name"
+          value={buyerName}
+          onChange={(e) => setBuyerName(e.target.value)}
+          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:border-slate-900"
+        />
+        <input
+          type="email"
+          placeholder="Your email address"
+          value={buyerEmail}
+          onChange={(e) => setBuyerEmail(e.target.value)}
+          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:border-slate-900"
+        />
+        <input
+          type="tel"
+          placeholder="Your phone number"
+          value={buyerPhone}
+          onChange={(e) => setBuyerPhone(e.target.value)}
+          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:border-slate-900"
+        />
       </div>
 
       <button

@@ -55,7 +55,7 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
   async function loadPurchases() {
     const { data } = await supabase
       .from('purchases')
-      .select('email, quantity, amount, created_at')
+      .select('email, quantity, amount, created_at, buyer_name, buyer_phone')
       .eq('raffle_id', raffleId)
       .order('created_at', { ascending: false });
     setPurchases(data ?? []);
@@ -194,6 +194,18 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
                 Close Raffle
               </button>
             )}
+            {(raffle.status === 'draft' || raffle.status === 'open') && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to cancel this raffle? This cannot be undone.')) {
+                    handleStatusChange('cancelled');
+                  }
+                }}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancel Raffle
+              </button>
+            )}
             {raffle.status === 'closed' && stats?.sold > 0 && (
               <button
                 onClick={handleDrawClick}
@@ -328,7 +340,9 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 px-4 text-slate-600 font-medium">Name</th>
                     <th className="text-left py-3 px-4 text-slate-600 font-medium">Email</th>
+                    <th className="text-left py-3 px-4 text-slate-600 font-medium">Phone</th>
                     <th className="text-left py-3 px-4 text-slate-600 font-medium">Tickets</th>
                     <th className="text-left py-3 px-4 text-slate-600 font-medium">Amount</th>
                     <th className="text-left py-3 px-4 text-slate-600 font-medium">Date</th>
@@ -337,7 +351,9 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
                 <tbody>
                   {purchases.map((p, i) => (
                     <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-3 px-4 text-slate-900">{p.buyer_name || '-'}</td>
                       <td className="py-3 px-4 text-slate-900">{p.email}</td>
+                      <td className="py-3 px-4 text-slate-900">{p.buyer_phone || '-'}</td>
                       <td className="py-3 px-4 text-slate-900">{p.quantity}</td>
                       <td className="py-3 px-4 text-slate-900">${(p.amount / 100).toFixed(2)}</td>
                       <td className="py-3 px-4 text-slate-500">{new Date(p.created_at).toLocaleDateString()}</td>

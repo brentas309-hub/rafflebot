@@ -112,18 +112,21 @@ export default function DrawModal({ raffleId, drawSession, onClose, onDrawComple
             <>
               <div className="text-center mb-6">
                 <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <p className="text-lg font-semibold text-slate-900">Winner Selected!</p>
+                <p className="text-lg font-semibold text-slate-900">🎉 Winner Selected!</p>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-6">
-                <p className="text-slate-600 text-sm mb-2">Winning Ticket</p>
-                <p className="text-4xl font-bold text-purple-600">#{result.ticket_number}</p>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <p className="text-xs text-slate-600 uppercase tracking-wider">User ID</p>
-                  <p className="font-mono text-sm text-slate-900 break-all">{result.user_id}</p>
+              <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-6 space-y-3">
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Name</p>
+                  <p className="font-semibold text-slate-900">{result.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-slate-900">{result.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Phone</p>
+                  <p className="text-slate-900">{result.phone}</p>
                 </div>
               </div>
 

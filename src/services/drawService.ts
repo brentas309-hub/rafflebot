@@ -49,8 +49,6 @@ export async function executeDrawWinner(
       },
       body: JSON.stringify({
         raffleId,
-        seedHash: session.seedHash,
-        seed: session.seed,
       }),
     }
   );

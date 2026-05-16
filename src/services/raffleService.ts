@@ -181,33 +181,18 @@ export async function getRaffleStats(raffleId: string) {
 }
 
 export async function getWinner(raffleId: string) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
   const { data, error } = await supabase
     .from('winners')
     .select('*')
     .eq('raffle_id', raffleId)
-    .maybeSingle();
+    .order('created_at', { ascending: false })
+    .limit(1);
 
   if (error) throw error;
-
-  if (!data) return null;
-
-  const { data: ticket } = await supabase
-    .from('tickets')
-    .select('ticket_number')
-    .eq('id', data.ticket_id)
-    .maybeSingle();
-
-  const { data: user } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', data.user_id)
-    .maybeSingle();
-
-  return {
-    ...data,
-    ticket_number: ticket?.ticket_number,
-    user,
-  };
+  return data?.[0] ?? null;
 }
 
 export async function getDrawAudit(raffleId: string) {

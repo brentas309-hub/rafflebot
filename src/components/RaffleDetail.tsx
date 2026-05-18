@@ -23,17 +23,29 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
   const [purchases, setPurchases] = useState<any[]>([]);
+  const [prizeDescriptions, setPrizeDescriptions] = useState<{description: string, sponsor: string}[]>([]);
+  const [savingPrizes, setSavingPrizes] = useState(false);
+  const [prizesSaved, setPrizesSaved] = useState(false);
+  const [editingPrizes, setEditingPrizes] = useState(false);
 
   useEffect(() => {
     loadRaffleData();
-    const interval = setInterval(loadRaffleData, 5000);
+    const interval = setInterval(() => {
+      if (!editingPrizes) loadRaffleData();
+    }, 5000);
     return () => clearInterval(interval);
-  }, [raffleId]);
+  }, [raffleId, editingPrizes]);
 
   async function loadRaffleData() {
     try {
       const raffleData = await getRaffleById(raffleId);
       setRaffle(raffleData);
+      if (raffleData?.prize_descriptions) {
+        setPrizeDescriptions(raffleData.prize_descriptions);
+      } else {
+        const count = raffleData?.number_of_prizes || 1;
+        setPrizeDescriptions(Array.from({ length: count }, () => ({ description: '', sponsor: '' })));
+      }
 
       const statsData = await getRaffleStats(raffleId);
       setStats(statsData);
@@ -310,6 +322,92 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
             </div>
           </div>
         )}
+
+        <div className="bg-white rounded-lg shadow p-8 mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">🏆 Prizes</h2>
+          {raffle.status === 'draft' ? (
+            <>
+              <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6">
+                ⚠️ Prize descriptions can only be edited before the raffle opens. Please add your prize details now.
+              </p>
+              <div className="space-y-4">
+                {prizeDescriptions.map((prize, index) => (
+                  <div key={index} className="border border-slate-200 rounded-lg p-4">
+                    <p className="text-sm font-bold text-purple-700 uppercase tracking-wider mb-3">
+                      Prize {index + 1}
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          Prize Description
+                        </label>
+                        <input
+                          type="text"
+                          value={prize.description}
+                          onChange={(e) => {
+                            setEditingPrizes(true);
+                            const updated = [...prizeDescriptions];
+                            updated[index] = { ...updated[index], description: e.target.value };
+                            setPrizeDescriptions(updated);
+                          }}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g. Meat package"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          Sponsor <span className="text-slate-400 font-normal">(Optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={prize.sponsor}
+                          onChange={(e) => {
+                            setEditingPrizes(true);
+                            const updated = [...prizeDescriptions];
+                            updated[index] = { ...updated[index], sponsor: e.target.value };
+                            setPrizeDescriptions(updated);
+                          }}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g. My Local Butcher"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={async () => {
+                  setSavingPrizes(true);
+                  await supabase.from('raffles').update({ prize_descriptions: prizeDescriptions }).eq('id', raffleId);
+                  setSavingPrizes(false);
+                  setPrizesSaved(true);
+                  setEditingPrizes(false);
+                  setTimeout(() => setPrizesSaved(false), 2000);
+                }}
+                disabled={savingPrizes}
+                className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {prizesSaved ? '✅ Saved!' : savingPrizes ? 'Saving...' : 'Save Prizes'}
+              </button>
+            </>
+          ) : (
+            <div className="space-y-3">
+              {prizeDescriptions.map((prize, index) => (
+                <div key={index} className="flex items-start gap-4 bg-slate-50 rounded-lg p-4">
+                  <span className="text-xs font-bold text-purple-700 uppercase tracking-wider whitespace-nowrap mt-1">
+                    Prize {index + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium text-slate-900">{prize.description || '-'}</p>
+                    {prize.sponsor && (
+                      <p className="text-sm text-slate-500">Sponsored by {prize.sponsor}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {winners.length > 0 && (
           <div className="bg-white rounded-lg shadow p-8 mb-8 border-l-4 border-purple-600">

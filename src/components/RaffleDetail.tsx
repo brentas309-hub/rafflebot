@@ -14,7 +14,7 @@ interface Props {
 export default function RaffleDetail({ raffleId, onBack }: Props) {
   const [raffle, setRaffle] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
-  const [winner, setWinner] = useState<any>(null);
+  const [winners, setWinners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [drawSession, setDrawSession] = useState<any>(null);
@@ -39,7 +39,7 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
       setStats(statsData);
 
       const winnerData = await getWinner(raffleId);
-      setWinner(winnerData);
+      setWinners(winnerData ?? []);
       loadPurchases();
     } catch (error) {
       console.error('Failed to load raffle:', error);
@@ -311,35 +311,42 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
           </div>
         )}
 
-        {winner && (
+        {winners.length > 0 && (
           <div className="bg-white rounded-lg shadow p-8 mb-8 border-l-4 border-purple-600">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">🎉 Draw Winner</h2>
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-4">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Name</p>
-                  <p className="text-lg font-bold text-slate-900">{winner.winner_name || '-'}</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">🎉 Draw Winners</h2>
+            <div className="space-y-4">
+              {winners.map((winner) => (
+                <div key={winner.id} className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6">
+                  <p className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-4">
+                    Prize {winner.prize_number}
+                  </p>
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Name</p>
+                      <p className="text-lg font-bold text-slate-900">{winner.winner_name || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Email</p>
+                      <p className="text-slate-900">{winner.winner_email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Phone</p>
+                      <p className="text-slate-900">{winner.winner_phone || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Drawn</p>
+                      <p className="text-slate-900">{new Date(winner.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <a
+                    href={`mailto:${winner.winner_email}?subject=Congratulations — You won the ${raffle.title} raffle!&body=Hi ${winner.winner_name || 'there'},%0D%0A%0D%0ACongratulations! You have been selected as the winner of our ${raffle.title} raffle.%0D%0A%0D%0APlease contact us to arrange collection of your prize.%0D%0A%0D%0AKind regards`}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    ✉️ Email Winner
+                  </a>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Email</p>
-                  <p className="text-slate-900">{winner.winner_email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Phone</p>
-                  <p className="text-slate-900">{winner.winner_phone || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Drawn</p>
-                  <p className="text-slate-900">{new Date(winner.created_at).toLocaleString()}</p>
-                </div>
-              </div>
+              ))}
             </div>
-            <a
-              href={`mailto:${winner.winner_email}?subject=Congratulations — You won the ${raffle.title} raffle!&body=Hi ${winner.winner_name || 'there'},%0D%0A%0D%0ACongratulations! You have been selected as the winner of our ${raffle.title} raffle.%0D%0A%0D%0APlease contact us to arrange collection of your prize.%0D%0A%0D%0AKind regards`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-            >
-              ✉️ Email Winner
-            </a>
           </div>
         )}
 

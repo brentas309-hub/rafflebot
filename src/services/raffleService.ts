@@ -190,11 +190,10 @@ export async function getWinner(raffleId: string) {
     .from('winners')
     .select('*')
     .eq('raffle_id', raffleId)
-    .order('created_at', { ascending: false })
-    .limit(1);
+    .order('prize_number', { ascending: true });
 
   if (error) throw error;
-  return data?.[0] ?? null;
+  return data ?? [];
 }
 
 export async function getDrawAudit(raffleId: string) {

@@ -72,7 +72,7 @@ export default function RaffleList({ raffles, loading, onRefresh, onNavigateToRa
                   {raffle.status.charAt(0).toUpperCase() + raffle.status.slice(1)}
                 </span>
               </td>
-              <td className="px-6 py-4 text-slate-900 font-medium">{raffle.total_tickets}</td>
+              <td className="px-6 py-4 text-slate-900 font-medium">{raffle.total_tickets - raffle.tickets_remaining}/{raffle.total_tickets}</td>
               <td className="px-6 py-4 text-slate-900 font-medium">${Number(raffle.ticket_price).toFixed(2)}</td>
               <td className="px-6 py-4 text-slate-600 text-sm">
                 {new Date(raffle.created_at).toLocaleDateString()}

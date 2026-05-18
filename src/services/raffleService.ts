@@ -160,24 +160,21 @@ export async function getRaffleStats(raffleId: string) {
   const raffleData = await getRaffleById(raffleId);
   if (!raffleData) throw new Error('Raffle not found');
 
-  const { data: purchases } = await supabase
-    .from('purchases')
-    .select('quantity, amount')
-    .eq('raffle_id', raffleId);
+  const { data: statsRows, error } = await supabase.rpc('get_raffle_stats', {
+    p_raffle_id: raffleId,
+  });
 
+  if (error) throw error;
+
+  const row = statsRows?.[0];
   const totalTickets = raffleData.total_tickets || 0;
-  const sold = purchases?.reduce((sum, p) => sum + (p.quantity || 0), 0) || 0;
-  const revenue = purchases?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-  const available = totalTickets - sold;
 
-  const stats = {
+  return {
     total: totalTickets,
-    sold,
-    available,
-    revenue: revenue / 100,
+    sold: Number(row?.tickets_sold ?? 0),
+    available: Number(row?.tickets_remaining ?? totalTickets),
+    revenue: Number(row?.total_raised_cents ?? 0) / 100,
   };
-
-  return stats;
 }
 
 export async function getWinner(raffleId: string) {

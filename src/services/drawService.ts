@@ -58,7 +58,8 @@ export async function executeDrawWinner(
     throw new Error(error.error || 'Failed to draw winner');
   }
 
-  return response.json();
+  const data = await response.json();
+  return { winners: data.winners };
 }
 
 export async function verifyDraw(

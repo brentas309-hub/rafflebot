@@ -19,7 +19,8 @@ export async function createRaffle(
   ticketPrice: number,
   drawMode: 'until_sold' | 'scheduled' = 'until_sold',
   drawTimestamp?: string,
-  fundraisingGoal?: number
+  fundraisingGoal?: number,
+  numberOfPrizes?: number
 ): Promise<Raffle> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
@@ -42,6 +43,10 @@ export async function createRaffle(
 
   if (fundraisingGoal !== undefined && fundraisingGoal > 0) {
     insertData.fundraising_goal = fundraisingGoal.toString();
+  }
+
+  if (numberOfPrizes !== undefined && numberOfPrizes > 0) {
+    insertData.number_of_prizes = numberOfPrizes;
   }
 
   const { data, error } = await supabase

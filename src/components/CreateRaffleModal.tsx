@@ -18,6 +18,7 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
     drawDate: '',
     drawTime: '',
     goalAmount: '',
+    numberOfPrizes: 1,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,7 +50,8 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
         formData.ticketPrice,
         formData.drawMode,
         drawTimestamp,
-        goalAmount
+        goalAmount,
+        formData.numberOfPrizes
       );
 
       const raffleAny = raffle as any;
@@ -197,6 +199,23 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
               </div>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-2">
+              Number of Prizes
+            </label>
+            <select
+              value={formData.numberOfPrizes}
+              onChange={(e) => setFormData({ ...formData, numberOfPrizes: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={1}>1 Prize</option>
+              <option value={2}>2 Prizes</option>
+              <option value={3}>3 Prizes</option>
+              <option value={4}>4 Prizes</option>
+              <option value={5}>5 Prizes</option>
+            </select>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-900 mb-2">

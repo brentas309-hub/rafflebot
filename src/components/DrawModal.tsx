@@ -8,6 +8,14 @@ interface DrawSession {
   timestamp: string;
 }
 
+interface Winner {
+  prizeNumber: number;
+  name: string;
+  email: string;
+  phone: string;
+  purchase_id: string;
+}
+
 interface Props {
   raffleId: string;
   drawSession: DrawSession;
@@ -18,7 +26,7 @@ interface Props {
 export default function DrawModal({ raffleId, drawSession, onClose, onDrawComplete }: Props) {
   const [step, setStep] = useState<'confirm' | 'executing' | 'complete'>('confirm');
   const [error, setError] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [winners, setWinners] = useState<Winner[]>([]);
 
   async function handleConfirmDraw() {
     setError('');
@@ -26,7 +34,7 @@ export default function DrawModal({ raffleId, drawSession, onClose, onDrawComple
 
     try {
       const drawResult = await executeDrawWinner(raffleId, drawSession);
-      setResult(drawResult.winner);
+      setWinners(drawResult.winners || []);
       setStep('complete');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to draw winner');
@@ -79,7 +87,7 @@ export default function DrawModal({ raffleId, drawSession, onClose, onDrawComple
               )}
 
               <p className="text-sm text-slate-600 mb-6">
-                Once you proceed, the winner will be permanently selected and recorded in the audit log.
+                Once you proceed, the winners will be permanently selected and recorded in the audit log.
               </p>
 
               <div className="flex gap-3">
@@ -104,30 +112,44 @@ export default function DrawModal({ raffleId, drawSession, onClose, onDrawComple
               <div className="inline-block">
                 <div className="w-12 h-12 border-4 border-slate-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4" />
               </div>
-              <p className="text-slate-600 font-medium">Drawing winner...</p>
+              <p className="text-slate-600 font-medium">Drawing winners...</p>
             </div>
           )}
 
-          {step === 'complete' && result && (
+          {step === 'complete' && winners.length > 0 && (
             <>
               <div className="text-center mb-6">
                 <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <p className="text-lg font-semibold text-slate-900">🎉 Winner Selected!</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  🎉 {winners.length === 1 ? 'Winner Selected!' : `${winners.length} Winners Selected!`}
+                </p>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-6 space-y-3">
-                <div>
-                  <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Name</p>
-                  <p className="font-semibold text-slate-900">{result.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Email</p>
-                  <p className="text-slate-900">{result.email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Phone</p>
-                  <p className="text-slate-900">{result.phone}</p>
-                </div>
+              <div className="space-y-4 mb-6">
+                {winners.map((winner) => (
+                  <div
+                    key={winner.prizeNumber}
+                    className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4"
+                  >
+                    <p className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-3">
+                      Prize {winner.prizeNumber}
+                    </p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Name</p>
+                        <p className="font-semibold text-slate-900">{winner.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Email</p>
+                        <p className="text-slate-900">{winner.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 uppercase tracking-wider mb-1">Phone</p>
+                        <p className="text-slate-900">{winner.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <button
@@ -143,3 +165,4 @@ export default function DrawModal({ raffleId, drawSession, onClose, onDrawComple
     </div>
   );
 }
+

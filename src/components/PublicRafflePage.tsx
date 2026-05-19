@@ -14,6 +14,7 @@ type RaffleRow = {
   processing_fee_mode?: "buyer_pays" | "club_absorbs" | null;
   description?: string | null;
   prize_description?: string | null;
+  prize_descriptions?: { description: string; sponsor: string }[] | null;
 };
 
 type RaffleStatsRow = {
@@ -182,7 +183,28 @@ export default function PublicRafflePage() {
           <h1 className="text-4xl font-black text-slate-900 mb-3">
             {raffle.title}
           </h1>
-          {raffle.prize_description ? (
+          {raffle.prize_descriptions && raffle.prize_descriptions.length > 0 ? (
+            <div className="mt-4 mb-2 text-left">
+              <h2 className="text-lg font-bold text-slate-900 mb-3 text-center">🏆 Prizes</h2>
+              <div className="space-y-2">
+                {raffle.prize_descriptions.map((prize, index) => (
+                  prize.description ? (
+                    <div key={index} className="bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-start gap-3">
+                      <span className="text-xs font-bold text-purple-700 uppercase tracking-wider whitespace-nowrap mt-0.5">
+                        Prize {index + 1}
+                      </span>
+                      <div>
+                        <p className="font-medium text-slate-900">{prize.description}</p>
+                        {prize.sponsor && (
+                          <p className="text-sm text-slate-500">Sponsored by {prize.sponsor}</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : null
+                ))}
+              </div>
+            </div>
+          ) : raffle.prize_description ? (
             <p className="text-slate-700 text-lg mb-2">
               {raffle.prize_description}
             </p>

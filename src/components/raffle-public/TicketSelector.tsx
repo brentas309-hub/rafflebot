@@ -18,6 +18,7 @@ interface TicketSelectorProps {
   stats: RaffleStats;
   selectedQuantity: number;
   onQuantityChange: (quantity: number) => void;
+  stripeAccountId?: string;
   referralCode?: string | null;
   onPurchaseSuccess?: (purchaseId: string) => void;
 }
@@ -34,6 +35,7 @@ export default function TicketSelector({
   stats,
   selectedQuantity,
   onQuantityChange,
+  stripeAccountId = "",
 }: TicketSelectorProps) {
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -68,6 +70,7 @@ export default function TicketSelector({
             buyer_name: buyerName,
             buyer_email: buyerEmail,
             buyer_phone: buyerPhone,
+            stripe_account_id: stripeAccountId,
           }),
         }
       );

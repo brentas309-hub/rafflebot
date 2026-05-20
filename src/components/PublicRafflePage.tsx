@@ -15,6 +15,7 @@ type RaffleRow = {
   description?: string | null;
   prize_description?: string | null;
   prize_descriptions?: { description: string; sponsor: string }[] | null;
+  owner_user_id?: string | null;
 };
 
 type RaffleStatsRow = {
@@ -33,6 +34,7 @@ export default function PublicRafflePage() {
   const [totalRaisedCents, setTotalRaisedCents] = useState(0);
   const [statsLoadFailed, setStatsLoadFailed] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [stripeAccountId, setStripeAccountId] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +44,7 @@ export default function PublicRafflePage() {
       setRaffle(null);
       setStatsLoadFailed(false);
       setTotalRaisedCents(0);
+      setStripeAccountId("");
 
       const slug = raffleSlug?.trim();
       const id = raffleId?.trim();
@@ -95,6 +98,17 @@ export default function PublicRafflePage() {
         setTotalRaisedCents(
           Number.isFinite(raisedCents) ? Math.max(0, raisedCents) : 0
         );
+      }
+
+      if (row.owner_user_id) {
+        const { data: orgData } = await supabase
+          .from("organisations")
+          .select("stripe_account_id")
+          .eq("owner_user_id", row.owner_user_id)
+          .maybeSingle();
+        if (orgData?.stripe_account_id) {
+          setStripeAccountId(orgData.stripe_account_id);
+        }
       }
 
       setRaffle(row);
@@ -260,6 +274,7 @@ export default function PublicRafflePage() {
           stats={{ tickets_remaining: ticketsRemaining }}
           selectedQuantity={selectedQuantity}
           onQuantityChange={setSelectedQuantity}
+          stripeAccountId={stripeAccountId}
         />
       </div>
     </div>

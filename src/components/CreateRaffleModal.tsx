@@ -33,6 +33,11 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
       return;
     }
 
+    if (formData.ticketPrice < 5) {
+      setError('Minimum ticket price is $5.00');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -150,7 +155,7 @@ export default function CreateRaffleModal({ onClose, onCreated }: Props) {
                 onChange={(e) => setFormData({ ...formData, ticketPrice: parseFloat(e.target.value) })}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 step="0.01"
-                min="0"
+                min="5"
                 required
               />
             </div>

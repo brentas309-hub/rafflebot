@@ -27,6 +27,12 @@ export async function createRaffle(
 
   const slug = generateSlug(title);
 
+  const { data: organisation } = await supabase
+    .from('organisations')
+    .select('id')
+    .eq('owner_user_id', user.id)
+    .maybeSingle();
+
   const insertData: any = {
     title,
     description,
@@ -36,6 +42,10 @@ export async function createRaffle(
     draw_mode: drawMode,
     slug,
   };
+
+  if (organisation) {
+    insertData.club_id = organisation.id;
+  }
 
   if (drawTimestamp) {
     insertData.draw_timestamp = drawTimestamp;

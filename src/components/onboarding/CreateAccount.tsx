@@ -39,6 +39,9 @@ export default function CreateAccount() {
         const contactName = localStorage.getItem('contactName') || '';
         const stripeAccountId = localStorage.getItem('stripeAccountId') || '';
 
+        const country = localStorage.getItem('country') || '';
+        const currency = localStorage.getItem('currency') || 'NZD';
+
         // Save organisation
         await supabase.from('organisations').insert({
           owner_user_id: userId,
@@ -47,6 +50,8 @@ export default function CreateAccount() {
           contact_email: email,
           stripe_account_id: stripeAccountId,
           stripe_onboarding_complete: true,
+          country: country,
+          default_currency: currency,
         });
 
         // Generate slug from raffle name
@@ -72,6 +77,8 @@ export default function CreateAccount() {
         localStorage.removeItem('contactName');
         localStorage.removeItem('email');
         localStorage.removeItem('stripeAccountId');
+        localStorage.removeItem('country');
+        localStorage.removeItem('currency');
       }
 
       navigate('/onboarding/complete');

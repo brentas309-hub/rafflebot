@@ -35,6 +35,7 @@ export default function PublicRafflePage() {
   const [statsLoadFailed, setStatsLoadFailed] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [stripeAccountId, setStripeAccountId] = useState<string>("");
+  const [currency, setCurrency] = useState<string>("NZD");
 
   useEffect(() => {
     let cancelled = false;
@@ -101,13 +102,21 @@ export default function PublicRafflePage() {
       }
 
       if (row.owner_user_id) {
-        const { data: orgData } = await supabase
+        const { createClient } = await import("@supabase/supabase-js");
+        const anonClient = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_ANON_KEY
+        );
+        const { data: orgData } = await anonClient
           .from("organisations")
-          .select("stripe_account_id")
+          .select("stripe_account_id, default_currency")
           .eq("owner_user_id", row.owner_user_id)
           .maybeSingle();
         if (orgData?.stripe_account_id) {
           setStripeAccountId(orgData.stripe_account_id);
+        }
+        if (orgData?.default_currency) {
+          setCurrency(orgData.default_currency);
         }
       }
 
@@ -190,6 +199,15 @@ export default function PublicRafflePage() {
       ? Math.min(100, Math.max(0, (raisedDollars / goalDollars) * 100))
       : 0;
 
+  function getCurrencySymbol(c: string): string {
+    switch (c.toUpperCase()) {
+      case 'GBP': return '£';
+      case 'EUR': return '€';
+      default: return '$';
+    }
+  }
+  const currencySymbol = getCurrencySymbol(currency);
+
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-lg mx-auto">
@@ -229,7 +247,7 @@ export default function PublicRafflePage() {
             </p>
           ) : null}
           <p className="text-slate-500 text-sm mt-4">
-            ${safePrice.toFixed(2)} per ticket
+            {currencySymbol}{safePrice.toFixed(2)} per ticket
           </p>
         </div>
 
@@ -249,7 +267,7 @@ export default function PublicRafflePage() {
         {!statsLoadFailed ? (
           <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-center text-sm font-semibold text-slate-800 mb-3">
-              ${raisedDollars.toFixed(2)} raised out of ${goalDollars.toFixed(2)}{" "}
+              {currencySymbol}{raisedDollars.toFixed(2)} raised out of {currencySymbol}{goalDollars.toFixed(2)}{" "}
               goal
             </p>
             {goalDollars > 0 ? (
@@ -275,8 +293,10 @@ export default function PublicRafflePage() {
           selectedQuantity={selectedQuantity}
           onQuantityChange={setSelectedQuantity}
           stripeAccountId={stripeAccountId}
+          currency={currency}
         />
       </div>
     </div>
   );
 }
+

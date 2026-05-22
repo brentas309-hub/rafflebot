@@ -21,6 +21,19 @@ interface TicketSelectorProps {
   stripeAccountId?: string;
   referralCode?: string | null;
   onPurchaseSuccess?: (purchaseId: string) => void;
+  currency?: string;
+}
+
+function getCurrencySymbol(currency?: string): string {
+  switch ((currency || 'NZD').toUpperCase()) {
+    case 'GBP': return '£';
+    case 'EUR': return '€';
+    case 'AUD':
+    case 'USD':
+    case 'CAD':
+    case 'NZD':
+    default: return '$';
+  }
 }
 
 const TICKET_OPTIONS = [
@@ -36,6 +49,7 @@ export default function TicketSelector({
   selectedQuantity,
   onQuantityChange,
   stripeAccountId = "",
+  currency = "NZD",
 }: TicketSelectorProps) {
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -44,6 +58,7 @@ export default function TicketSelector({
   const [buyerPhone, setBuyerPhone] = useState('');
 
   const ticketTotal = raffle.ticket_price * selectedQuantity;
+  const currencySymbol = getCurrencySymbol(currency);
 
   // ✅ STRIPE CHECKOUT FUNCTION (FIXED)
   const handleBuyTickets = async () => {
@@ -135,7 +150,7 @@ export default function TicketSelector({
             </div>
 
             <div className="text-2xl font-black">
-              ${(raffle.ticket_price * option.quantity).toFixed(2)}
+              {currencySymbol}{(raffle.ticket_price * option.quantity).toFixed(2)}
             </div>
           </button>
         ))}
@@ -145,7 +160,7 @@ export default function TicketSelector({
         <div className="flex justify-between items-center">
           <span className="text-white text-2xl font-bold">Total</span>
           <span className="text-5xl font-black text-yellow-400">
-            ${ticketTotal.toFixed(2)}
+            {currencySymbol}{ticketTotal.toFixed(2)}
           </span>
         </div>
       </div>

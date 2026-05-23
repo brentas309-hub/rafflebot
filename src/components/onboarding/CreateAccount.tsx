@@ -10,6 +10,7 @@ export default function CreateAccount() {
   const [error, setError] = useState('');
 
   const email = localStorage.getItem('email') || '';
+  const isFreeEmail = /^.+@(gmail|hotmail|yahoo|outlook|icloud|protonmail)\./i.test(email);
   const contactName = localStorage.getItem('contactName') || '';
 
   const handleSubmit = async () => {
@@ -45,6 +46,7 @@ export default function CreateAccount() {
         // Save organisation
         await supabase.from('organisations').insert({
           owner_user_id: userId,
+          status: 'pending_review',
           organisation_name: orgName,
           contact_first_name: contactName,
           contact_email: email,
@@ -126,6 +128,11 @@ export default function CreateAccount() {
                 disabled
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-500"
               />
+              {isFreeEmail && (
+                <p className="text-amber-600 text-sm mt-1">
+                  💡 We recommend using an organisation email (e.g. admin@yourclub.org) for faster verification.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Create password</label>

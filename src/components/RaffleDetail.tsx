@@ -27,6 +27,7 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
   const [savingPrizes, setSavingPrizes] = useState(false);
   const [prizesSaved, setPrizesSaved] = useState(false);
   const [editingPrizes, setEditingPrizes] = useState(false);
+  const [orgStatus, setOrgStatus] = useState<string | null>(null);
 
   useEffect(() => {
     loadRaffleData();
@@ -57,6 +58,15 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
       console.error('Failed to load raffle:', error);
     } finally {
       setLoading(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: orgData } = await supabase
+          .from('organisations')
+          .select('status')
+          .eq('owner_user_id', user.id)
+          .maybeSingle();
+        setOrgStatus(orgData?.status ?? null);
+      }
     }
   }
 
@@ -187,12 +197,18 @@ export default function RaffleDetail({ raffleId, onBack }: Props) {
 
           <div className="flex gap-3">
             {raffle.status === 'draft' && (
-              <button
-                onClick={() => handleStatusChange('open')}
-                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Open Raffle
-              </button>
+              orgStatus === 'approved' ? (
+                <button
+                  onClick={() => handleStatusChange('open')}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Open Raffle
+                </button>
+              ) : (
+                <div className="px-6 py-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-sm font-medium">
+                  Your organisation is under review — you cannot open your raffle until approved.
+                </div>
+              )
             )}
             {raffle.status === 'open' && (
               <button

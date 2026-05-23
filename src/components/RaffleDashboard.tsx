@@ -18,6 +18,7 @@ export default function RaffleDashboard() {
   const [loadingRaffles, setLoadingRaffles] = useState(false);
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [orgStatus, setOrgStatus] = useState<string | null>(null);
 
   const refreshRaffles = useCallback(async () => {
     if (!userId) return;
@@ -55,8 +56,17 @@ export default function RaffleDashboard() {
   }, []);
 
   useEffect(() => {
-    if (userId) refreshRaffles();
-    else setRaffles([]);
+    if (userId) {
+      refreshRaffles();
+      supabase
+        .from('organisations')
+        .select('status')
+        .eq('owner_user_id', userId)
+        .maybeSingle()
+        .then(({ data }) => {
+          setOrgStatus(data?.status ?? null);
+        });
+    } else setRaffles([]);
   }, [userId, refreshRaffles]);
 
   const handleSignOut = async () => {
@@ -128,6 +138,12 @@ export default function RaffleDashboard() {
           </button>
         </div>
       </header>
+
+      {(orgStatus === 'pending_review' || orgStatus === 'manual_review') && (
+        <div style={{ background: '#FAEEDA', borderBottom: '0.5px solid #FAC775', padding: '10px 20px', textAlign: 'center', fontSize: '13px', color: '#633806' }}>
+          Your organisation is currently under review. You can continue setting up your raffle while we verify your details.
+        </div>
+      )}
 
       <main className="max-w-5xl mx-auto px-6 py-8">
         <RaffleList

@@ -102,15 +102,11 @@ export default function PublicRafflePage() {
       }
 
       if (row.owner_user_id) {
-        const { createClient } = await import("@supabase/supabase-js");
-        const anonClient = createClient(
-          import.meta.env.VITE_SUPABASE_URL,
-          import.meta.env.VITE_SUPABASE_ANON_KEY
-        );
-        const { data: orgData } = await anonClient
+        const { data: orgData } = await supabase
           .from("organisations")
           .select("stripe_account_id, default_currency")
           .eq("owner_user_id", row.owner_user_id)
+          .setHeader("Authorization", `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`)
           .maybeSingle();
         if (orgData?.stripe_account_id) {
           setStripeAccountId(orgData.stripe_account_id);

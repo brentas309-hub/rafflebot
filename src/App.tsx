@@ -17,6 +17,11 @@ import { CompletionPage } from "./components/onboarding/CompletionPage";
 import RafflePreview from './components/onboarding/RafflePreview';
 import StripeSuccess from './components/onboarding/StripeSuccess';
 import CreateAccount from './components/onboarding/CreateAccount';
+import TermsPage from './components/legal/TermsPage';
+import PrivacyPage from './components/legal/PrivacyPage';
+import OrganizerTermsPage from './components/legal/OrganizerTermsPage';
+import ParticipantTermsPage from './components/legal/ParticipantTermsPage';
+import TrustSafetyPage from './components/legal/TrustSafetyPage';
 
 export default function App() {
   return (
@@ -46,6 +51,11 @@ export default function App() {
 
       <Route path="/success" element={<Success />} />
       <Route path="/cancel" element={<Cancel />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/organizer-terms" element={<OrganizerTermsPage />} />
+      <Route path="/participant-terms" element={<ParticipantTermsPage />} />
+      <Route path="/trust-safety" element={<TrustSafetyPage />} />
     </Routes>
   );
 }

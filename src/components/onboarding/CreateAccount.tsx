@@ -8,6 +8,7 @@ export default function CreateAccount() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const email = localStorage.getItem('email') || '';
   const isFreeEmail = /^.+@(gmail|hotmail|yahoo|outlook|icloud|protonmail)\./i.test(email);
@@ -15,6 +16,10 @@ export default function CreateAccount() {
 
   const handleSubmit = async () => {
     setError('');
+    if (!termsAccepted) {
+      setError('Please accept the Terms of Service, Privacy Policy, and Organizer Terms to continue.');
+      return;
+    }
     if (!password || !confirmPassword) {
       setError('Please fill in both password fields.');
       return;
@@ -156,11 +161,32 @@ export default function CreateAccount() {
             </div>
           </div>
 
+          <div className="mt-4 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600"
+              />
+              <span className="text-sm text-gray-600 leading-relaxed">
+                I agree to the{' '}
+                <a href="/terms" target="_blank" className="text-blue-600 hover:underline">Terms of Service</a>,{' '}
+                <a href="/privacy" target="_blank" className="text-blue-600 hover:underline">Privacy Policy</a>, and{' '}
+                <a href="/organizer-terms" target="_blank" className="text-blue-600 hover:underline">Organizer Terms</a>
+              </span>
+            </label>
+            <p className="text-xs text-gray-400 pl-7">
+              All organisations are subject to our{' '}
+              <a href="/trust-safety" target="_blank" className="text-blue-500 hover:underline">Trust & Safety Policy</a>
+            </p>
+          </div>
+
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !termsAccepted}
             className={`w-full mt-6 py-3 rounded-xl font-semibold transition ${
-              loading ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+              loading || !termsAccepted ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
             {loading ? 'Creating your account...' : 'Launch my raffle!'}

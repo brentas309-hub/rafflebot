@@ -29,10 +29,17 @@ export function onAuthStateChange(callback: (session: any) => void) {
   });
 }
 
-export async function signUp(email: string, password: string, name: string) {
+export async function signUp(email: string, password: string, name: string, organisationName: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        contact_first_name: name,
+        organisation_name: organisationName,
+      },
+      emailRedirectTo: 'https://getrafflebot.com/dashboard',
+    },
   });
 
   if (error) throw error;

@@ -20,7 +20,7 @@ export default function Auth({ onAuth }: Props) {
 
     try {
       if (isSignUp) {
-        await signUp(email, password, name);
+        await signUp(email, password, name, '');
       } else {
         await signIn(email, password);
       }

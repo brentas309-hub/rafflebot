@@ -13,6 +13,7 @@ export default function CreateAccount() {
   const email = localStorage.getItem('email') || '';
   const isFreeEmail = /^.+@(gmail|hotmail|yahoo|outlook|icloud|protonmail)\./i.test(email);
   const contactName = localStorage.getItem('contactName') || '';
+  const orgName = localStorage.getItem('orgName') || '';
 
   const handleSubmit = async () => {
     setError('');
@@ -34,7 +35,7 @@ export default function CreateAccount() {
     }
     setLoading(true);
     try {
-      const authData = await signUp(email, password, contactName);
+      const authData = await signUp(email, password, contactName, orgName);
       const userId = authData.user?.id;
 
       if (userId) {

@@ -17,6 +17,7 @@ import { CompletionPage } from "./components/onboarding/CompletionPage";
 import RafflePreview from './components/onboarding/RafflePreview';
 import StripeSuccess from './components/onboarding/StripeSuccess';
 import CreateAccount from './components/onboarding/CreateAccount';
+import ConfirmEmail from './components/onboarding/ConfirmEmail';
 import TermsPage from './components/legal/TermsPage';
 import PrivacyPage from './components/legal/PrivacyPage';
 import OrganizerTermsPage from './components/legal/OrganizerTermsPage';
@@ -35,6 +36,7 @@ export default function App() {
       <Route path="/onboarding/preview" element={<RafflePreview />} />
       <Route path="/onboarding/stripe-success" element={<StripeSuccess />} />
       <Route path="/onboarding/create-account" element={<CreateAccount />} />
+      <Route path="/onboarding/confirm-email" element={<ConfirmEmail />} />
 
       <Route path="/onboarding" element={<OnboardingShell />}>
         <Route path="intro" element={<VideoIntro />} />

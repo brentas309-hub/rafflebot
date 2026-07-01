@@ -56,6 +56,38 @@ export async function signUp(email: string, password: string, name: string, orga
   return data;
 }
 
+export async function signUpOrganiser(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string,
+) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        contact_first_name: firstName,
+        contact_last_name: lastName,
+      },
+      emailRedirectTo: 'https://getrafflebot.com/onboarding/organisation',
+    },
+  });
+
+  if (error) throw error;
+
+  if (data.user) {
+    await supabase.from('users').insert({
+      id: data.user.id,
+      email,
+      name: `${firstName} ${lastName}`,
+      role: 'user',
+    });
+  }
+
+  return data;
+}
+
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,

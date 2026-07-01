@@ -11,7 +11,7 @@ export default function LandingPage() {
         <div className="font-semibold text-lg">RaffleBot</div>
 
         <button
-          onClick={() => navigate('/onboarding/create-raffle')}
+          onClick={() => navigate('/onboarding/create-account')}
           className="bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
         >
           Get Started
@@ -98,7 +98,7 @@ export default function LandingPage() {
             </div>
 
             <button
-              onClick={() => navigate('/onboarding/create-raffle')}
+              onClick={() => navigate('/onboarding/create-account')}
               className="bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition shadow-md"
             >
               Start Your First Raffle

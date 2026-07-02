@@ -94,57 +94,82 @@ export default function CreateAccount() {
   };
 
   const inputClass = (field: string) =>
-    `w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-      fieldErrors[field] ? 'border-red-400' : 'border-gray-300'
+    `w-full h-[54px] rounded-[14px] border bg-white px-4 text-[0.9375rem] text-[#111827] outline-none transition-colors hover:border-[#C9D8F4] focus:border-[#2366E6] focus:shadow-[0_0_0_4px_rgba(35,102,230,0.14)] ${
+      fieldErrors[field] ? 'border-red-400' : 'border-[#E6ECF5]'
     }`;
 
   return (
-    <div className="min-h-screen flex">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: 'radial-gradient(circle at top left, #FFFFFF 0%, #FBFCFE 55%, #F5F8FC 100%)',
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div
+        className="flex w-full max-w-[1100px] min-h-[680px] overflow-hidden rounded-[30px] border border-[#E8EEF8]"
+        style={{
+          boxShadow:
+            '0 30px 70px rgba(17,24,39,0.08), 0 12px 28px rgba(17,24,39,0.05)',
+        }}
+      >
       {/* Left panel */}
       <div
-        className="hidden lg:flex lg:w-[42%] flex-col relative overflow-hidden text-white px-10 py-10"
-        style={{ backgroundColor: '#2366e6' }}
+        className="hidden lg:flex lg:w-[33%] flex-col relative overflow-hidden text-white pt-12 px-10 pb-28"
+        style={{ background: 'linear-gradient(180deg, #2F73F0 0%, #2366E6 100%)' }}
       >
-        <img src="/logo.png" className="h-9" alt="RaffleBot" />
-
-        <h1 className="text-2xl xl:text-3xl font-bold mt-10 leading-snug">
-          Skyrocket your{' '}
-          <span style={{ color: '#a8c8ff' }}>fundraising</span>{' '}
-          today with RaffleBot™
+        <h1 className="text-4xl font-extrabold leading-[1.1] tracking-[-0.04em] mt-4 pl-2">
+          <span className="block">Skyrocket your</span>
+          <span className="block">fundraising</span>
+          <span className="block">today with RaffleBot™</span>
         </h1>
 
-        <ul className="mt-8 space-y-4 text-sm leading-relaxed">
+        <ul className="mt-8 space-y-5 text-[0.9rem] font-medium leading-relaxed text-[rgba(255,255,255,0.92)]">
           {BULLETS.map((text) => (
             <li key={text} className="flex items-start gap-3">
-              <span
-                className="mt-1.5 w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-              />
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="mt-0.5 shrink-0"
+                aria-hidden="true"
+              >
+                <circle cx="8" cy="8" r="7" fill="rgba(255,255,255,0.15)" />
+                <path
+                  d="M5 8l2 2 4-4"
+                  stroke="white"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               <span>{text}</span>
             </li>
           ))}
         </ul>
 
+        {/* MASCOT GOES HERE — peeking from RIGHT edge */}
+
         <svg
-          className="absolute bottom-0 left-0 w-full"
-          viewBox="0 0 1440 120"
+          className="absolute bottom-0 left-0 w-full h-[50px]"
+          viewBox="0 0 1440 50"
           preserveAspectRatio="none"
           aria-hidden="true"
         >
           <path
             fill="#ffffff"
-            d="M0,80 C360,20 720,120 1080,60 C1260,30 1380,50 1440,70 L1440,120 L0,120 Z"
+            d="M0,30 C480,0 960,50 1440,20 L1440,50 L0,50 Z"
           />
         </svg>
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 lg:w-[58%] bg-white flex flex-col min-h-screen">
-        <div className="flex-1 flex items-center justify-center px-6 py-10">
-          <div className="w-full max-w-md">
-            <p className="text-center text-sm text-gray-600 mb-8">
+      <div className="flex-1 lg:w-[67%] bg-white flex flex-col justify-center px-14 py-12">
+          <div className="w-full max-w-md mx-auto">
+            <p className="text-center text-sm text-[#667085] mb-8">
               Already have an account?{' '}
-              <Link to="/dashboard" className="text-[#2366e6] font-medium hover:underline">
+              <Link to="/dashboard" className="text-[#2366E6] font-semibold hover:underline">
                 Log in
               </Link>
             </p>
@@ -152,7 +177,7 @@ export default function CreateAccount() {
             <button
               type="button"
               onClick={handleGoogleSignUp}
-              className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-3 bg-white text-gray-700 font-medium hover:bg-gray-50 transition"
+              className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[14px] border border-[#E6ECF5] bg-white text-[0.9375rem] font-medium text-[#111827] transition-colors hover:border-[#C9D8F4]"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -177,7 +202,7 @@ export default function CreateAccount() {
 
             <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-500 whitespace-nowrap">
+              <span className="text-[0.8125rem] text-[#667085] whitespace-nowrap">
                 or create your account using email
               </span>
               <div className="flex-1 h-px bg-gray-200" />
@@ -186,7 +211,7 @@ export default function CreateAccount() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-[0.875rem] font-medium text-[#374151] mb-1.5">
                     First Name
                   </label>
                   <input
@@ -200,7 +225,7 @@ export default function CreateAccount() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-[0.875rem] font-medium text-[#374151] mb-1.5">
                     Last Name
                   </label>
                   <input
@@ -216,7 +241,7 @@ export default function CreateAccount() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-[0.875rem] font-medium text-[#374151] mb-1.5">Email</label>
                 <input
                   type="email"
                   value={email}
@@ -229,7 +254,7 @@ export default function CreateAccount() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-[0.875rem] font-medium text-[#374151] mb-1.5">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -280,8 +305,7 @@ export default function CreateAccount() {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full mt-6 py-3 rounded-full font-semibold text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#2366e6' }}
+              className="w-full h-14 mt-6 rounded-2xl bg-[#2366E6] text-base font-bold text-white transition-all duration-200 ease-in-out hover:bg-[#1D59CC] hover:-translate-y-px active:bg-[#184AAD] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating your account...' : 'Continue'}
             </button>
@@ -290,11 +314,11 @@ export default function CreateAccount() {
               <p className="text-red-600 text-sm text-center mt-3">{error}</p>
             )}
 
-            <p className="text-center text-xs text-gray-500 mt-6">
+            <p className="text-center text-[0.8125rem] text-[#667085] mt-4">
               🔒 100% private. We never share your email.
             </p>
           </div>
-        </div>
+      </div>
       </div>
     </div>
   );

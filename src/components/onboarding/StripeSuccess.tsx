@@ -1,95 +1,108 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getCurrentSession } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
 
 export default function StripeSuccess() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [agreed, setAgreed] = useState(false);
+  const [updating, setUpdating] = useState(true);
 
-  const raffleName = localStorage.getItem('raffleName') || location.state?.raffleName || 'My Raffle';
-  const orgName = localStorage.getItem('orgName') || location.state?.orgName || '';
-  const contactName = localStorage.getItem('contactName') || location.state?.contactName || '';
-  const email = localStorage.getItem('email') || location.state?.email || '';
-  const stripeAccountId = localStorage.getItem('stripeAccountId') || location.state?.stripeAccountId || '';
+  useEffect(() => {
+    const markComplete = async () => {
+      const session = await getCurrentSession();
+      if (!session) {
+        navigate('/onboarding/create-account');
+        return;
+      }
+
+      await supabase
+        .from('organisations')
+        .update({ stripe_onboarding_complete: true })
+        .eq('owner_user_id', session.user.id);
+
+      setUpdating(false);
+    };
+
+    markComplete();
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b px-6 py-4 flex justify-between items-center">
-        <div className="text-xl font-semibold text-blue-600">RaffleBot</div>
-        <button onClick={() => navigate('/')} className="text-sm text-gray-500 hover:text-gray-700">Exit</button>
-      </div>
-
-      <div className="max-w-xl mx-auto px-6 py-10">
-
-        <div className="text-sm text-gray-500 flex justify-between mb-1">
-          <span>Step 5 of 7</span>
-          <span>75%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-          <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }} />
-        </div>
-
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3 mb-6">
-          <span className="text-green-600 text-2xl">✓</span>
-          <div>
-            <p className="font-semibold text-green-700 text-sm">Stripe connected successfully!</p>
-            <p className="text-green-600 text-xs">You're ready to start collecting payments.</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border p-6 mb-4">
-          <h2 className="text-lg font-semibold mb-1">Confirm your details</h2>
-          <p className="text-sm text-gray-500 mb-4">Please check everything looks correct before going live.</p>
-
-          <div className="divide-y text-sm">
-            <div className="flex justify-between py-3">
-              <span className="text-gray-500">Raffle name</span>
-              <span className="font-medium">{raffleName}</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-gray-500">Organisation</span>
-              <span className="font-medium">{orgName}</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-gray-500">Contact name</span>
-              <span className="font-medium">{contactName}</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-gray-500">Email</span>
-              <span className="font-medium">{email}</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-gray-500">Stripe account</span>
-              <span className="font-medium text-green-600">✓ Connected {stripeAccountId ? `(${stripeAccountId})` : ''}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border p-4 mb-6 flex items-start gap-3">
-          <input
-            type="checkbox"
-            id="tandc"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-1 w-4 h-4 accent-blue-600"
-          />
-          <label htmlFor="tandc" className="text-sm text-gray-700 leading-relaxed">
-            I agree to the Rafflebot{' '}
-            <a href="/terms" className="text-blue-600 underline" target="_blank" rel="noreferrer">
-              Terms & Conditions
-            </a>{' '}
-            and confirm the details above are correct.
-          </label>
-        </div>
-
-        <button
-          disabled={!agreed}
-          onClick={() => navigate('/onboarding/create-account')}
-          className={`w-full py-3 rounded-xl font-semibold transition ${agreed ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: 'radial-gradient(circle at top left, #FFFFFF 0%, #FBFCFE 55%, #F5F8FC 100%)',
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div
+        className="flex w-full max-w-[1100px] min-h-[680px] overflow-hidden rounded-[30px] border border-[#E8EEF8] items-stretch"
+        style={{ boxShadow: '0 30px 70px rgba(17,24,39,0.08), 0 12px 28px rgba(17,24,39,0.05)' }}
+      >
+        {/* Left panel */}
+        <div
+          className="hidden lg:flex lg:w-[33%] flex-col relative overflow-hidden text-white pt-24 px-10 pb-28 self-stretch"
+          style={{ background: 'linear-gradient(180deg, #2F73F0 0%, #2366E6 100%)' }}
         >
-          Create login to start your raffle
-        </button>
+          <h2 className="text-5xl font-extrabold leading-[1.1] tracking-[-0.04em] mt-2 pl-2">
+            You're ready to raise funds online.
+          </h2>
 
+          <ul className="mt-8 space-y-5 text-[0.9rem] font-medium leading-relaxed text-[rgba(255,255,255,0.92)]">
+            {[
+              'Payments go straight to your bank',
+              'Fully automated — no manual work',
+              'Your first raffle is just minutes away',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+                  <circle cx="8" cy="8" r="7" fill="rgba(255,255,255,0.15)" />
+                  <path d="M5 8l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <svg className="absolute bottom-0 left-0 w-full h-[50px]" viewBox="0 0 1440 50" preserveAspectRatio="none" aria-hidden="true">
+            <path fill="#ffffff" d="M0,30 C480,0 960,50 1440,20 L1440,50 L0,50 Z" />
+          </svg>
+        </div>
+
+        {/* Right panel */}
+        <div className="flex-1 lg:w-[67%] bg-white flex flex-col justify-center px-14 py-12">
+
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <span className="text-sm font-medium text-[#667085]">Step 3 of 5</span>
+          </div>
+
+          {updating ? (
+            <p className="text-center text-[#667085]">Finishing up…</p>
+          ) : (
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </div>
+
+              <h1 className="text-3xl font-extrabold text-[#111827] tracking-tight mb-2">
+                Congratulations! 🎉
+              </h1>
+
+              <p className="text-[#667085] text-[0.95rem] mb-10">
+                You've successfully connected your Stripe account with RaffleBot.
+                You're ready to build your first raffle.
+              </p>
+
+              <button
+                onClick={() => navigate('/onboarding/create-raffle')}
+                className="w-full h-14 rounded-2xl bg-[#2366E6] text-base font-bold text-white transition-all duration-200 ease-in-out hover:bg-[#1D59CC] hover:-translate-y-px active:bg-[#184AAD]"
+              >
+                Build my raffle →
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

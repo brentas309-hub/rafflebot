@@ -199,6 +199,7 @@ export default function CreateRaffleStep() {
         title: title.trim(),
         description: description.trim() || null,
         total_tickets: parseInt(totalTickets, 10),
+        tickets_remaining: parseInt(totalTickets, 10),
         ticket_price: parseFloat(ticketPrice),
         prize_value: parseFloat(prizeValue),
         draw_timestamp: new Date(drawDate).toISOString(),

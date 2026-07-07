@@ -85,7 +85,6 @@ export default function TicketSelector({
             buyer_name: buyerName,
             buyer_email: buyerEmail,
             buyer_phone: buyerPhone,
-            stripe_account_id: stripeAccountId,
           }),
         }
       );

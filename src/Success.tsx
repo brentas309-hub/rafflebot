@@ -133,20 +133,41 @@ export default function Success() {
     });
   };
 
+  const openMessenger = () => {
+    const u = encodeURIComponent(url);
+    window.open(
+      `https://www.facebook.com/dialog/send?link=${u}&app_id=291494419107518&redirect_uri=${u}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const openEmail = () => {
+    const subject = encodeURIComponent("Join me in this raffle!");
+    const body = encodeURIComponent(`I just bought a raffle ticket — you should too! ${url}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
-        <p className="text-slate-600 text-lg font-medium">Loading...</p>
+      <div
+        className="min-h-screen flex items-center justify-center p-8"
+        style={{ background: "radial-gradient(circle at top left, #FFFFFF 0%, #FBFCFE 55%, #F5F8FC 100%)" }}
+      >
+        <p className="text-slate-400 text-base">Loading your confirmation…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+      <div
+        className="min-h-screen flex items-center justify-center p-8"
+        style={{ background: "radial-gradient(circle at top left, #FFFFFF 0%, #FBFCFE 55%, #F5F8FC 100%)" }}
+      >
         <div className="max-w-md text-center">
-          <h2 className="text-2xl font-black text-slate-900 mb-2">⚠️ Error</h2>
-          <p className="text-slate-600">{error}</p>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">⚠️ Something went wrong</h2>
+          <p className="text-slate-500">{error}</p>
         </div>
       </div>
     );
@@ -158,110 +179,208 @@ export default function Success() {
   const soldPct = y > 0 ? Math.min(100, Math.max(0, (x / y) * 100)) : 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-800 p-4 font-sans">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-8 text-center space-y-4">
-        <h2 className="text-2xl font-black text-slate-900">🎉 You&apos;re in!</h2>
+    <div
+      className="min-h-screen flex flex-col items-center justify-start p-4 pt-6 pb-10 font-sans"
+      style={{ background: "radial-gradient(circle at top left, #FFFFFF 0%, #FBFCFE 55%, #F5F8FC 100%)" }}
+    >
+      {/* RaffleBot wordmark */}
+      <div className="w-full max-w-md mb-5 flex items-center gap-2">
+        <span className="text-base font-semibold" style={{ color: "#2366E6" }}>RaffleBot</span>
+      </div>
 
-        <p className="text-slate-700">
-          You purchased <strong className="text-slate-900">{quantity}</strong>{" "}
-          tickets
-        </p>
-        <p className="text-slate-700">
-          Total paid:{" "}
-          <strong className="text-slate-900">
-            ${(amount / 100).toFixed(2)}
-          </strong>
-        </p>
-
-        {raffleSlug && raffleStatsPhase === "loading" ? (
-          <div className="pt-2 space-y-2 text-left">
-            <div className="h-2 rounded-full bg-slate-200 overflow-hidden animate-pulse" />
-            <p className="text-sm text-slate-500 text-center">
-              Loading ticket progress…
-            </p>
-          </div>
-        ) : null}
-
-        {raffleSlug && raffleStatsPhase === "error" ? (
-          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            Unable to load ticket progress. You can still share the raffle link
-            below.
-          </p>
-        ) : null}
-
-        {raffleSlug && raffleStatsPhase === "loaded" && y > 0 ? (
-          <div className="pt-2 space-y-2 text-left">
-            <p className="text-sm font-medium text-slate-800 text-center">
-              {x} out of {y} tickets sold — {z} remaining
-            </p>
-            <div
-              className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden"
-              role="progressbar"
-              aria-valuenow={x}
-              aria-valuemin={0}
-              aria-valuemax={y}
-            >
-              <div
-                className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
-                style={{ width: `${soldPct}%` }}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        <div className="flex flex-col gap-2.5 pt-2">
-          <button
-            type="button"
-            className="w-full py-2.5 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            onClick={() => {
-              window.location.href = "/";
+      {/* Card */}
+      <div
+        className="w-full max-w-md bg-white overflow-hidden"
+        style={{
+          borderRadius: "20px",
+          border: "0.5px solid #E2E8F0",
+          boxShadow: "0 2px 20px rgba(35,102,230,0.08)",
+        }}
+      >
+        {/* Hero photo */}
+        <div className="relative" style={{ height: "190px" }}>
+          <img
+            src="/community_photo.png"
+            alt="Community supporters"
+            className="w-full h-full object-cover"
+            style={{ borderRadius: "20px 20px 0 0" }}
+          />
+          {/* Subtle dark gradient at bottom so white card feels connected */}
+          <div
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: "60px",
+              background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.18))",
+            }}
+          />
+          {/* Celebration badge bridging photo and card body */}
+          <div
+            className="absolute left-1/2 -bottom-6 flex items-center justify-center bg-white"
+            style={{
+              transform: "translateX(-50%)",
+              width: "52px",
+              height: "52px",
+              borderRadius: "50%",
+              boxShadow: "0 2px 12px rgba(35,102,230,0.18)",
+              fontSize: "26px",
+              lineHeight: 1,
+              zIndex: 10,
             }}
           >
-            Back to Home
-          </button>
-
-          <button
-            type="button"
-            className="w-full py-2.5 px-4 rounded-lg bg-slate-200 text-slate-900 font-semibold hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
-            onClick={() => {
-              if (raffleSlug) {
-                window.location.href = `/raffle/${raffleSlug}`;
-              } else {
-                window.location.href = "/";
-              }
-            }}
-          >
-            Buy More Tickets
-          </button>
+            🎉
+          </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-200 space-y-3">
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Share this with your family and friends and help us to fundraise
-            even more
-          </p>
-          <div className="grid grid-cols-3 gap-2">
+        {/* Card body */}
+        <div className="px-6 pb-7" style={{ paddingTop: "36px" }}>
+          {/* Headline */}
+          <div className="text-center mb-5">
+            <p className="text-slate-500 text-sm font-normal mb-1">
+              Thank you for supporting
+            </p>
+            <p className="font-black text-2xl" style={{ color: "#2366E6" }}>
+              Springfield United FC!
+            </p>
+            <p className="text-slate-400 text-xs mt-2">
+              Your ticket has been successfully entered into the draw.
+            </p>
+          </div>
+
+          {/* Stats tiles */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[
+              { label: "Ticket(s)", value: String(quantity) },
+              { label: "Total paid", value: `$${(amount / 100).toFixed(2)}` },
+              { label: "Draw date", value: "—" },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="text-center py-3 px-2"
+                style={{
+                  background: "#F5F8FC",
+                  borderRadius: "12px",
+                }}
+              >
+                <p className="text-xs text-slate-400 mb-1">{label}</p>
+                <p className="text-sm font-semibold text-slate-800">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Progress bar */}
+          {raffleSlug && raffleStatsPhase === "loading" && (
+            <div className="mb-4 p-4 rounded-xl" style={{ background: "#F5F8FC" }}>
+              <div className="h-2 rounded-full bg-slate-200 overflow-hidden animate-pulse" />
+              <p className="text-xs text-slate-400 text-center mt-2">Loading ticket progress…</p>
+            </div>
+          )}
+
+          {raffleSlug && raffleStatsPhase === "error" && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
+              Unable to load ticket progress. You can still share the raffle link below.
+            </p>
+          )}
+
+          {raffleSlug && raffleStatsPhase === "loaded" && y > 0 && (
+            <div className="mb-4 p-4 rounded-xl" style={{ background: "#F5F8FC" }}>
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-xs font-medium text-slate-600">Community progress</span>
+                <span className="text-xs text-slate-400">{z} remaining</span>
+              </div>
+              <div
+                className="w-full rounded-full overflow-hidden"
+                style={{ height: "6px", background: "#D8E4F8" }}
+                role="progressbar"
+                aria-valuenow={x}
+                aria-valuemin={0}
+                aria-valuemax={y}
+              >
+                <div
+                  className="h-full rounded-full transition-[width] duration-300"
+                  style={{ width: `${soldPct}%`, background: "#2366E6" }}
+                />
+              </div>
+              <p className="text-xs text-slate-400 mt-2">{x} out of {y} tickets sold</p>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-col gap-2 mb-6">
             <button
               type="button"
-              className="py-2 px-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              onClick={openFacebook}
+              className="w-full py-3 px-4 rounded-xl text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ background: "#2366E6" }}
+              onMouseOver={e => (e.currentTarget.style.background = "#1a52c8")}
+              onMouseOut={e => (e.currentTarget.style.background = "#2366E6")}
+              onClick={() => {
+                window.location.href = raffleSlug ? `/raffle/${raffleSlug}` : "/";
+              }}
             >
-              Facebook
+              Back to raffle
             </button>
             <button
               type="button"
-              className="py-2 px-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              onClick={openWhatsApp}
+              className="w-full py-3 px-4 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ color: "#2366E6", border: "1.5px solid #2366E6", background: "transparent" }}
+              onClick={() => {
+                window.location.href = raffleSlug ? `/raffle/${raffleSlug}` : "/";
+              }}
             >
-              WhatsApp
+              Buy another ticket
             </button>
-            <button
-              type="button"
-              className="py-2 px-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              onClick={copyForInstagram}
-            >
-              {instagramCopied ? "Copied!" : "Instagram"}
-            </button>
+          </div>
+
+          {/* Share section */}
+          <div
+            className="pt-5"
+            style={{ borderTop: "0.5px solid #E2E8F0" }}
+          >
+            <div className="text-center mb-1">
+              <span className="text-base">❤️</span>
+              <span className="text-sm font-semibold text-slate-700 ml-1">Help your club reach its goal</span>
+            </div>
+            <p className="text-xs text-slate-400 text-center mb-4">
+              The more people who enter, the more money your club raises.
+            </p>
+
+            {/* Share buttons */}
+            <div className="flex flex-wrap gap-2 justify-center mb-6">
+              {[
+                { label: "Facebook", onClick: openFacebook },
+                { label: "WhatsApp", onClick: openWhatsApp },
+                { label: "Messenger", onClick: openMessenger },
+                {
+                  label: instagramCopied ? "Copied!" : "Copy link",
+                  onClick: copyForInstagram,
+                },
+                { label: "Email", onClick: openEmail },
+              ].map(({ label, onClick }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={onClick}
+                  className="py-2 px-3 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+                  style={{
+                    borderRadius: "8px",
+                    border: "0.5px solid #CBD5E1",
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.background = "#F5F8FC")}
+                  onMouseOut={e => (e.currentTarget.style.background = "white")}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Footer thank you */}
+            <div className="text-center">
+              <p className="text-sm font-semibold mb-1" style={{ color: "#2366E6" }}>
+                💙 Thank you
+              </p>
+              <p className="text-xs text-slate-400">
+                Because of supporters like you, community clubs continue to thrive.
+              </p>
+            </div>
           </div>
         </div>
       </div>

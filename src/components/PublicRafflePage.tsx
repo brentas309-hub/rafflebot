@@ -36,6 +36,7 @@ export default function PublicRafflePage() {
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [stripeAccountId, setStripeAccountId] = useState<string>("");
   const [currency, setCurrency] = useState<string>("NZD");
+  const [stripeOnboardingComplete, setStripeOnboardingComplete] = useState<boolean | null | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +47,7 @@ export default function PublicRafflePage() {
       setStatsLoadFailed(false);
       setTotalRaisedCents(0);
       setStripeAccountId("");
+      setStripeOnboardingComplete(undefined);
 
       const slug = raffleSlug?.trim();
       const id = raffleId?.trim();
@@ -104,7 +106,7 @@ export default function PublicRafflePage() {
       if (row.owner_user_id) {
         const { data: orgData } = await supabase
           .from("organisations")
-          .select("stripe_account_id, default_currency")
+          .select("stripe_account_id, default_currency, stripe_onboarding_complete")
           .eq("owner_user_id", row.owner_user_id)
           .setHeader("Authorization", `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`)
           .maybeSingle();
@@ -114,6 +116,7 @@ export default function PublicRafflePage() {
         if (orgData?.default_currency) {
           setCurrency(orgData.default_currency);
         }
+        setStripeOnboardingComplete(orgData?.stripe_onboarding_complete);
       }
 
       setRaffle(row);
@@ -290,6 +293,7 @@ export default function PublicRafflePage() {
           onQuantityChange={setSelectedQuantity}
           stripeAccountId={stripeAccountId}
           currency={currency}
+          stripe_onboarding_complete={stripeOnboardingComplete}
         />
       </div>
     </div>

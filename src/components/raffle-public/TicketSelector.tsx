@@ -19,6 +19,7 @@ interface TicketSelectorProps {
   selectedQuantity: number;
   onQuantityChange: (quantity: number) => void;
   stripeAccountId?: string;
+  stripe_onboarding_complete?: boolean | null;
   referralCode?: string | null;
   onPurchaseSuccess?: (purchaseId: string) => void;
   currency?: string;
@@ -49,6 +50,7 @@ export default function TicketSelector({
   selectedQuantity,
   onQuantityChange,
   stripeAccountId = "",
+  stripe_onboarding_complete,
   currency = "NZD",
 }: TicketSelectorProps) {
 
@@ -188,14 +190,20 @@ export default function TicketSelector({
         />
       </div>
 
-      <button
-        onClick={handleBuyTickets}
-        disabled={isProcessing || stats.tickets_remaining < selectedQuantity}
-        className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900 font-black text-2xl py-6 rounded-2xl transition-all flex items-center justify-center gap-4 shadow-2xl hover:shadow-3xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-      >
-        <span>{isProcessing ? 'Processing...' : 'BUY TICKETS NOW'}</span>
-        <span className="text-3xl">→</span>
-      </button>
+      {stripe_onboarding_complete === true ? (
+        <button
+          onClick={handleBuyTickets}
+          disabled={isProcessing || stats.tickets_remaining < selectedQuantity}
+          className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900 font-black text-2xl py-6 rounded-2xl transition-all flex items-center justify-center gap-4 shadow-2xl hover:shadow-3xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          <span>{isProcessing ? 'Processing...' : 'BUY TICKETS NOW'}</span>
+          <span className="text-3xl">→</span>
+        </button>
+      ) : (
+        <div className="w-full rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 font-semibold text-lg py-6 px-4 text-center">
+          Tickets are not yet available for this raffle
+        </div>
+      )}
 
       <div className="flex items-center justify-center gap-3 mt-6 text-slate-600 text-sm">
         <Smartphone className="w-5 h-5" />

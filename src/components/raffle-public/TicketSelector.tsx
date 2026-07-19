@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, Smartphone } from 'lucide-react';
+import { CreditCard, Smartphone, Lock, Check, Heart } from 'lucide-react';
 
 interface RaffleData {
   id: string;
@@ -37,6 +37,10 @@ function getCurrencySymbol(currency?: string): string {
   }
 }
 
+function formatMoney(n: number): string {
+  return n.toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 const TICKET_OPTIONS = [
   { quantity: 1, label: '1 ticket' },
   { quantity: 3, label: '3 tickets', popular: true },
@@ -61,6 +65,8 @@ export default function TicketSelector({
 
   const ticketTotal = raffle.ticket_price * selectedQuantity;
   const currencySymbol = getCurrencySymbol(currency);
+
+  const ticketsAvailable = stripe_onboarding_complete === true;
 
   // ✅ STRIPE CHECKOUT FUNCTION (FIXED)
   const handleBuyTickets = async () => {
@@ -108,111 +114,220 @@ export default function TicketSelector({
     }
   };
 
-  return (
-    <div className="bg-white rounded-3xl p-8 shadow-2xl mb-6">
-      <h2 className="text-3xl font-black text-slate-900 mb-8 text-center">
-        Select Your Tickets
-      </h2>
-
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        {TICKET_OPTIONS.map((option) => (
-          <button
-            key={option.quantity}
-            onClick={() => onQuantityChange(option.quantity)}
-            disabled={option.quantity > stats.tickets_remaining}
-            className={`relative p-6 rounded-2xl border-3 transition-all shadow-md ${
-              selectedQuantity === option.quantity
-                ? 'border-slate-900 bg-slate-900 text-white scale-105 shadow-xl'
-                : 'border-slate-300 bg-white text-slate-900 hover:border-slate-500 hover:shadow-lg'
-            } ${
-              option.quantity > stats.tickets_remaining
-                ? 'opacity-50 cursor-not-allowed'
-                : 'cursor-pointer'
-            }`}
-          >
-            {option.popular && (
-              <div
-                className={`absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-md ${
-                  selectedQuantity === option.quantity
-                    ? 'bg-yellow-400 text-slate-900'
-                    : 'bg-slate-200 text-slate-700'
-                }`}
-              >
-                Most Popular
-              </div>
-            )}
-
-            <div className="text-5xl font-black mb-2">
-              {option.quantity}
-            </div>
-
-            <div className="text-sm font-semibold opacity-90 mb-3">
-              {option.label}
-            </div>
-
-            <div className="text-2xl font-black">
-              {currencySymbol}{(raffle.ticket_price * option.quantity).toFixed(2)}
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 mb-8 shadow-xl">
-        <div className="flex justify-between items-center">
-          <span className="text-white text-2xl font-bold">Total</span>
-          <span className="text-5xl font-black text-yellow-400">
-            {currencySymbol}{ticketTotal.toFixed(2)}
-          </span>
+  if (!ticketsAvailable) {
+    return (
+      <div
+        className="bg-white mb-6 p-6"
+        style={{
+          borderRadius: "20px",
+          border: "0.5px solid #E2E8F0",
+          boxShadow: "0 2px 20px rgba(35,102,230,0.08)",
+        }}
+      >
+        <div
+          className="w-full text-slate-600 font-semibold text-base py-8 px-4 text-center"
+          style={{
+            borderRadius: "12px",
+            border: "0.5px solid #E2E8F0",
+            background: "#F5F8FC",
+          }}
+        >
+          Tickets are not yet available for this raffle
         </div>
       </div>
+    );
+  }
 
+  return (
+    <div className="mb-6">
+      <h2 className="text-lg font-bold text-slate-900 mb-3">
+        Choose Your Tickets
+      </h2>
+
+      {/* 4-across on sm+, 2x2 on mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+        {TICKET_OPTIONS.map((option) => {
+          const isSelected = selectedQuantity === option.quantity;
+          const isDisabled = option.quantity > stats.tickets_remaining;
+          return (
+            <button
+              key={option.quantity}
+              onClick={() => onQuantityChange(option.quantity)}
+              disabled={isDisabled}
+              className={`relative p-4 transition-all text-center bg-white ${
+                isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+              }`}
+              style={{
+                borderRadius: "14px",
+                border: isSelected ? "1.5px solid #2366E6" : "1px solid #E2E8F0",
+                boxShadow: isSelected
+                  ? "0 0 0 4px rgba(35,102,230,0.08), 0 2px 12px rgba(35,102,230,0.12)"
+                  : "0 1px 3px rgba(15,23,42,0.04)",
+              }}
+            >
+              {isSelected && (
+                <span
+                  className="absolute flex items-center justify-center"
+                  style={{
+                    top: "8px",
+                    right: "8px",
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: "50%",
+                    background: "#2366E6",
+                  }}
+                >
+                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                </span>
+              )}
+
+              <div className="text-3xl font-black text-slate-900 mb-0.5">
+                {option.quantity}
+              </div>
+
+              <div className="text-xs text-slate-400 mb-1.5">
+                {option.quantity === 1 ? 'Ticket' : 'Tickets'}
+              </div>
+
+              {option.popular && (
+                <span
+                  className="inline-block text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 mb-1.5"
+                  style={{
+                    borderRadius: "99px",
+                    background: "#EAF1FD",
+                    color: "#2366E6",
+                  }}
+                >
+                  Most Popular
+                </span>
+              )}
+
+              <div className="text-lg font-black" style={{ color: "#2366E6" }}>
+                {currencySymbol}{formatMoney(raffle.ticket_price * option.quantity)}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-slate-400 text-center mb-5 flex items-center justify-center gap-1">
+        🎟️ The more tickets you buy, the more you help our club!
+      </p>
+
+      {/* Total — white card, amount right in big blue */}
+      <div
+        className="flex justify-between items-center px-5 py-4 mb-6 bg-white"
+        style={{
+          borderRadius: "14px",
+          border: "0.5px solid #E2E8F0",
+          boxShadow: "0 1px 6px rgba(15,23,42,0.04)",
+        }}
+      >
+        <span className="text-slate-900 text-base font-bold">Total</span>
+        <span className="text-3xl font-black" style={{ color: "#2366E6" }}>
+          {currencySymbol}{formatMoney(ticketTotal)}
+        </span>
+      </div>
+
+      {/* Your Details */}
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Your Details</h3>
       <div className="space-y-3 mb-6">
         <input
           type="text"
-          placeholder="Your full name"
+          placeholder="Full name"
           value={buyerName}
           onChange={(e) => setBuyerName(e.target.value)}
-          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:border-slate-900"
+          className="w-full px-4 py-3 rounded-xl text-slate-900 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+          style={{ border: "1px solid #E2E8F0" }}
         />
         <input
           type="email"
-          placeholder="Your email address"
+          placeholder="Email address"
           value={buyerEmail}
           onChange={(e) => setBuyerEmail(e.target.value)}
-          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:border-slate-900"
+          className="w-full px-4 py-3 rounded-xl text-slate-900 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+          style={{ border: "1px solid #E2E8F0" }}
         />
         <input
           type="tel"
-          placeholder="Your phone number"
+          placeholder="Phone number"
           value={buyerPhone}
           onChange={(e) => setBuyerPhone(e.target.value)}
-          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:border-slate-900"
+          className="w-full px-4 py-3 rounded-xl text-slate-900 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+          style={{ border: "1px solid #E2E8F0" }}
         />
       </div>
 
-      {stripe_onboarding_complete === true ? (
-        <button
-          onClick={handleBuyTickets}
-          disabled={isProcessing || stats.tickets_remaining < selectedQuantity}
-          className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900 font-black text-2xl py-6 rounded-2xl transition-all flex items-center justify-center gap-4 shadow-2xl hover:shadow-3xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+      {/* Trust row */}
+      <div className="flex items-center justify-center gap-1.5 mb-3 text-slate-500 text-xs">
+        <Lock className="w-3.5 h-3.5" />
+        <span className="font-medium">Secure payment powered by Stripe</span>
+      </div>
+      <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
+        <span
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white"
+          style={{ borderRadius: "10px", border: "0.5px solid #CBD5E1" }}
         >
-          <span>{isProcessing ? 'Processing...' : 'BUY TICKETS NOW'}</span>
-          <span className="text-3xl">→</span>
-        </button>
-      ) : (
-        <div className="w-full rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 font-semibold text-lg py-6 px-4 text-center">
-          Tickets are not yet available for this raffle
-        </div>
-      )}
+          <Smartphone className="w-3.5 h-3.5" /> Apple Pay
+        </span>
+        <span
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white"
+          style={{ borderRadius: "10px", border: "0.5px solid #CBD5E1" }}
+        >
+          <Smartphone className="w-3.5 h-3.5" /> Google Pay
+        </span>
+        <span
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white"
+          style={{ borderRadius: "10px", border: "0.5px solid #CBD5E1" }}
+        >
+          <CreditCard className="w-3.5 h-3.5" /> All Cards
+        </span>
+      </div>
 
-      <div className="flex items-center justify-center gap-3 mt-6 text-slate-600 text-sm">
-        <Smartphone className="w-5 h-5" />
-        <span className="font-semibold">Apple Pay</span>
-        <span>•</span>
-        <CreditCard className="w-5 h-5" />
-        <span className="font-semibold">Google Pay</span>
-        <span>•</span>
-        <span className="font-semibold">All Cards</span>
+      {/* Premium yellow buy button */}
+      <button
+        onClick={handleBuyTickets}
+        disabled={isProcessing || stats.tickets_remaining < selectedQuantity}
+        className="w-full font-bold text-lg py-4 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+        style={{
+          borderRadius: "14px",
+          background: "#FACC15",
+          color: "#0F172A",
+          boxShadow: "0 2px 12px rgba(250,204,21,0.35)",
+        }}
+        onMouseOver={e => { e.currentTarget.style.background = "#EAB308"; }}
+        onMouseOut={e => { e.currentTarget.style.background = "#FACC15"; }}
+      >
+        <span>{isProcessing ? 'Processing…' : 'Complete Purchase'}</span>
+        <span className="text-xl">→</span>
+      </button>
+
+      <p className="text-xs text-slate-400 text-center mt-3 mb-6">
+        No account required. Your payment is secure and encrypted.
+      </p>
+
+      {/* Support impact card */}
+      <div
+        className="flex items-center gap-3 p-5"
+        style={{
+          borderRadius: "16px",
+          background: "#EAF1FD",
+        }}
+      >
+        <span
+          className="flex items-center justify-center flex-shrink-0 bg-white"
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            boxShadow: "0 1px 6px rgba(35,102,230,0.15)",
+          }}
+        >
+          <Heart className="w-5 h-5" style={{ color: "#2366E6", fill: "#2366E6" }} />
+        </span>
+        <p className="text-sm font-bold text-slate-900">
+          Your support makes a real difference
+        </p>
       </div>
     </div>
   );

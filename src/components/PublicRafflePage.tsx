@@ -23,6 +23,12 @@ type RaffleStatsRow = {
   total_raised_cents: number | string | bigint;
 };
 
+const PAGE_BG = "radial-gradient(circle at top left, #FFFFFF 0%, #FBFCFE 55%, #F5F8FC 100%)";
+
+function formatMoney(n: number): string {
+  return n.toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function PublicRafflePage() {
   const { raffleSlug, raffleId } = useParams<{
     raffleSlug?: string;
@@ -132,20 +138,26 @@ export default function PublicRafflePage() {
 
   if (loadStatus === "loading") {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
-        <p className="text-slate-600 text-lg font-medium">Loading raffle...</p>
+      <div
+        className="min-h-screen flex items-center justify-center p-8"
+        style={{ background: PAGE_BG }}
+      >
+        <p className="text-slate-400 text-base">Loading raffle…</p>
       </div>
     );
   }
 
   if (loadStatus === "not_found") {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+      <div
+        className="min-h-screen flex items-center justify-center p-8"
+        style={{ background: PAGE_BG }}
+      >
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-black text-slate-900 mb-2">
             Raffle not found
           </h1>
-          <p className="text-slate-600">
+          <p className="text-slate-500">
             This link may be wrong or the raffle is no longer available.
           </p>
         </div>
@@ -155,12 +167,15 @@ export default function PublicRafflePage() {
 
   if (loadStatus === "error") {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+      <div
+        className="min-h-screen flex items-center justify-center p-8"
+        style={{ background: PAGE_BG }}
+      >
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-black text-slate-900 mb-2">
             Something went wrong
           </h1>
-          <p className="text-slate-600">
+          <p className="text-slate-500">
             We could not load this raffle. Please try again in a moment.
           </p>
         </div>
@@ -208,81 +223,153 @@ export default function PublicRafflePage() {
   const currencySymbol = getCurrencySymbol(currency);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-lg mx-auto">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-black text-slate-900 mb-3">
-            {raffle.title}
+    <div
+      className="min-h-screen py-8 px-4"
+      style={{ background: PAGE_BG }}
+    >
+      <div className="max-w-2xl mx-auto">
+        {/* Hero photo — placeholder until per-club photo uploads exist */}
+        <div
+          className="relative overflow-hidden mb-6"
+          style={{ height: "190px", borderRadius: "20px" }}
+        >
+          <img
+            src="/community_photo.png"
+            alt="Community supporters"
+            className="w-full h-full object-cover"
+          />
+          <div
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: "60px",
+              background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.18))",
+            }}
+          />
+        </div>
+
+        {/* Title block — left aligned */}
+        <div className="mb-6">
+          <h1 className="text-4xl font-black text-slate-900 leading-tight mb-2">
+            Support our<br />{raffle.title}
           </h1>
-          {raffle.prize_descriptions && raffle.prize_descriptions.length > 0 ? (
-            <div className="mt-4 mb-2 text-left">
-              <h2 className="text-lg font-bold text-slate-900 mb-3 text-center">🏆 Prizes</h2>
-              <div className="space-y-2">
-                {raffle.prize_descriptions.map((prize, index) => (
-                  prize.description ? (
-                    <div key={index} className="bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-start gap-3">
-                      <span className="text-xs font-bold text-purple-700 uppercase tracking-wider whitespace-nowrap mt-0.5">
-                        Prize {index + 1}
-                      </span>
-                      <div>
-                        <p className="font-medium text-slate-900">{prize.description}</p>
-                        {prize.sponsor && (
-                          <p className="text-sm text-slate-500">Sponsored by {prize.sponsor}</p>
-                        )}
-                      </div>
-                    </div>
-                  ) : null
-                ))}
-              </div>
-            </div>
-          ) : raffle.prize_description ? (
-            <p className="text-slate-700 text-lg mb-2">
-              {raffle.prize_description}
-            </p>
-          ) : null}
           {raffle.description ? (
-            <p className="text-slate-600 whitespace-pre-wrap">
+            <p className="text-slate-500 text-base whitespace-pre-wrap mb-2">
               {raffle.description}
             </p>
           ) : null}
-          <p className="text-slate-500 text-sm mt-4">
-            {currencySymbol}{safePrice.toFixed(2)} per ticket
+          <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "#2366E6" }}>
+            🎟️ {currencySymbol}{formatMoney(safePrice)} per ticket
           </p>
         </div>
 
+        {/* Prizes */}
+        {raffle.prize_descriptions && raffle.prize_descriptions.length > 0 ? (
+          <div
+            className="bg-white p-5 mb-6"
+            style={{
+              borderRadius: "16px",
+              border: "0.5px solid #E2E8F0",
+              boxShadow: "0 1px 6px rgba(15,23,42,0.04)",
+            }}
+          >
+            <h2 className="text-base font-bold text-slate-900 mb-3">🏆 Prizes</h2>
+            <div className="space-y-2">
+              {raffle.prize_descriptions.map((prize, index) => (
+                prize.description ? (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 px-4 py-3"
+                    style={{
+                      background: "#F5F8FC",
+                      borderRadius: "12px",
+                    }}
+                  >
+                    <span
+                      className="text-xs font-bold uppercase tracking-wider whitespace-nowrap mt-0.5"
+                      style={{ color: "#2366E6" }}
+                    >
+                      Prize {index + 1}
+                    </span>
+                    <div>
+                      <p className="font-medium text-slate-800 text-sm">{prize.description}</p>
+                      {prize.sponsor && (
+                        <p className="text-xs text-slate-400">Sponsored by {prize.sponsor}</p>
+                      )}
+                    </div>
+                  </div>
+                ) : null
+              ))}
+            </div>
+          </div>
+        ) : raffle.prize_description ? (
+          <div
+            className="bg-white p-5 mb-6"
+            style={{
+              borderRadius: "16px",
+              border: "0.5px solid #E2E8F0",
+              boxShadow: "0 1px 6px rgba(15,23,42,0.04)",
+            }}
+          >
+            <h2 className="text-base font-bold text-slate-900 mb-2">🏆 Prizes</h2>
+            <p className="text-slate-600 text-sm">
+              {raffle.prize_description}
+            </p>
+          </div>
+        ) : null}
+
+        {/* Warnings */}
         {!raffle.slug ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 p-4 mb-6 text-sm font-medium text-center">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 text-amber-800 p-3 mb-6 text-xs font-medium text-center">
             This raffle is missing a public link. Ticket purchases may not work
             until a slug is set.
           </div>
         ) : null}
 
         {statsLoadFailed ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 p-4 mb-6 text-sm font-medium text-center">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 text-amber-800 p-3 mb-6 text-xs font-medium text-center">
             Unable to load ticket availability. Refresh the page and try again.
           </div>
         ) : null}
 
+        {/* Community Progress — white card, chunkier bar */}
         {!statsLoadFailed ? (
-          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-center text-sm font-semibold text-slate-800 mb-3">
-              {currencySymbol}{raisedDollars.toFixed(2)} raised out of {currencySymbol}{goalDollars.toFixed(2)}{" "}
-              goal
+          <div
+            className="bg-white p-5 mb-6"
+            style={{
+              borderRadius: "16px",
+              border: "0.5px solid #E2E8F0",
+              boxShadow: "0 1px 6px rgba(15,23,42,0.04)",
+            }}
+          >
+            <p className="text-sm font-bold text-slate-900 mb-3">
+              🎯 Community Progress
             </p>
             {goalDollars > 0 ? (
               <div
-                className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden"
+                className="w-full rounded-full overflow-hidden mb-3"
+                style={{ height: "10px", background: "#E8EEF9" }}
                 role="progressbar"
                 aria-valuenow={Math.round(raisedPct)}
                 aria-valuemin={0}
                 aria-valuemax={100}
               >
                 <div
-                  className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
-                  style={{ width: `${raisedPct}%` }}
+                  className="h-full rounded-full transition-[width] duration-300"
+                  style={{ width: `${raisedPct}%`, background: "#2366E6" }}
                 />
               </div>
             ) : null}
+            <div className="flex justify-between items-baseline text-sm">
+              <span className="font-semibold text-slate-800">
+                {currencySymbol}{formatMoney(raisedDollars)} raised
+              </span>
+              <span className="text-slate-400">
+                Goal {currencySymbol}{formatMoney(goalDollars)}
+              </span>
+              <span className="text-slate-400">
+                {ticketsRemaining} tickets remaining
+              </span>
+            </div>
           </div>
         ) : null}
 
@@ -299,4 +386,3 @@ export default function PublicRafflePage() {
     </div>
   );
 }
-

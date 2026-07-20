@@ -10,12 +10,20 @@ export default function LandingPage() {
       <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
         <div className="font-semibold text-lg">RaffleBot</div>
 
-        <button
-          onClick={() => navigate('/onboarding/create-account')}
-          className="bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
-        >
-          Get Started
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-[#2366E6] px-4 py-2 rounded-xl font-medium hover:bg-blue-50 transition"
+          >
+            Log in
+          </button>
+          <button
+            onClick={() => navigate('/onboarding/create-account')}
+            className="bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
+          >
+            Get Started
+          </button>
+        </div>
       </div>
 
       {/* HERO (DO NOT TOUCH) */}

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { signIn, signUp } from '../lib/auth';
+import { useNavigate } from 'react-router-dom';
+import { signIn, signUp, isAdmin } from '../lib/auth';
 
 interface Props {
   onAuth: () => void;
 }
 
 export default function Auth({ onAuth }: Props) {
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,10 +23,15 @@ export default function Auth({ onAuth }: Props) {
     try {
       if (isSignUp) {
         await signUp(email, password, name, '');
+        onAuth();
       } else {
         await signIn(email, password);
+        if (await isAdmin()) {
+          navigate('/admin');
+        } else {
+          onAuth();
+        }
       }
-      onAuth();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {

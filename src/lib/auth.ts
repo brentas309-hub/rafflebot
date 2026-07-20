@@ -19,8 +19,8 @@ export async function getCurrentSession() {
 }
 
 export async function isAdmin() {
-  const user = await getCurrentUser();
-  return user?.role === 'admin';
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.app_metadata?.role === 'admin';
 }
 
 export function onAuthStateChange(callback: (session: any) => void) {

@@ -23,6 +23,8 @@ import PrivacyPage from './components/legal/PrivacyPage';
 import OrganizerTermsPage from './components/legal/OrganizerTermsPage';
 import ParticipantTermsPage from './components/legal/ParticipantTermsPage';
 import TrustSafetyPage from './components/legal/TrustSafetyPage';
+import AdminRoute from './components/AdminRoute';
+import AdminPage from './pages/AdminPage';
 
 export default function App() {
   return (
@@ -30,6 +32,7 @@ export default function App() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/dashboard" element={<RaffleDashboard />} />
       <Route path="/club/settings" element={<ClubSettingsPage />} />
+      <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
       <Route path="/onboarding/create-raffle" element={<CreateRaffleStep />} />
       <Route path="/onboarding/organisation" element={<OrganisationDetails />} />

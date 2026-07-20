@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { signOut } from '../lib/auth';
 import RafflebotLogo from '../components/RafflebotLogo';
 
 type Organisation = {
@@ -43,6 +45,7 @@ function statusBadgeClass(status: string | null) {
 }
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('pending');
   const [pending, setPending] = useState<Organisation[]>([]);
   const [allOrgs, setAllOrgs] = useState<Organisation[]>([]);
@@ -176,14 +179,26 @@ export default function AdminPage() {
       className="min-h-screen bg-[#F8FAFC]"
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
-      <nav className="w-full bg-white border-b border-[#E6ECF5] px-6 py-4 flex items-center gap-3">
-        <RafflebotLogo
-          size={120}
-          className="h-10 w-auto max-w-none shrink-0 object-contain overflow-visible"
-        />
-        <span className="text-[#111827] font-bold text-[15px] whitespace-nowrap">
-          Master Admin
-        </span>
+      <nav className="w-full bg-white border-b border-[#E6ECF5] px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <RafflebotLogo
+            size={120}
+            className="h-10 w-auto max-w-none shrink-0 object-contain overflow-visible"
+          />
+          <span className="text-[#111827] font-bold text-[15px] whitespace-nowrap">
+            Master Admin
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut();
+            navigate('/');
+          }}
+          className="text-slate-600 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors"
+        >
+          Log out
+        </button>
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-8">

@@ -1,33 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, X, Check, Building2, CreditCard, Image as ImageIcon } from 'lucide-react';
-import { getClubForCurrentUser, updateClubDetails, uploadClubLogo, deleteClubLogo } from '../services/clubService';
+import { ArrowLeft, X, Check, Building2, CreditCard } from 'lucide-react';
+import { getClubForCurrentUser, updateClubDetails, type ClubDetails } from '../services/clubService';
 import RafflebotLogo from './RafflebotLogo';
-
-interface Club {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-  stripe_account_id: string | null;
-  logo_url: string | null;
-}
 
 export default function ClubSettingsPage() {
   const navigate = useNavigate();
-  const [club, setClub] = useState<Club | null>(null);
+  const [club, setClub] = useState<ClubDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    contact_phone: '',
     address: '',
   });
 
@@ -45,6 +34,7 @@ export default function ClubSettingsPage() {
           name: clubData.name || '',
           email: clubData.email || '',
           phone: clubData.phone || '',
+          contact_phone: clubData.contact_phone || '',
           address: clubData.address || '',
         });
       }
@@ -73,63 +63,6 @@ export default function ClubSettingsPage() {
       setError('Failed to save changes. Please try again.');
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!club) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Please upload a PNG, JPG, or SVG file');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
-      return;
-    }
-
-    setError(null);
-    setSuccess(false);
-    setUploading(true);
-
-    try {
-      const logoUrl = await uploadClubLogo(club.id, file);
-      setClub({ ...club, logo_url: logoUrl });
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      console.error('Logo upload failed:', err);
-      setError('Failed to upload logo. Please try again.');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  }
-
-  async function handleDeleteLogo() {
-    if (!club || !club.logo_url) return;
-    if (!confirm('Are you sure you want to delete the club logo?')) return;
-
-    setError(null);
-    setSuccess(false);
-    setUploading(true);
-
-    try {
-      await deleteClubLogo(club.id, club.logo_url);
-      setClub({ ...club, logo_url: null });
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      console.error('Logo deletion failed:', err);
-      setError('Failed to delete logo. Please try again.');
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -239,14 +172,27 @@ export default function ClubSettingsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number
+                  Organisation Phone
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+61 400 000 000"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Contact Person Phone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.contact_phone}
+                  onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="+61 400 000 000"
                 />
               </div>
 
@@ -261,75 +207,6 @@ export default function ClubSettingsPage() {
                   placeholder="123 Main St, City, State, ZIP"
                   rows={3}
                 />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Club Branding</h3>
-                <p className="text-sm text-slate-600">Upload your club logo</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-6">
-              <div className="flex-shrink-0">
-                {club.logo_url ? (
-                  <div className="relative">
-                    <img
-                      src={club.logo_url}
-                      alt={`${club.name} logo`}
-                      className="w-24 h-24 rounded-full object-cover border-2 border-slate-200"
-                    />
-                    <button
-                      onClick={handleDeleteLogo}
-                      disabled={uploading}
-                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-colors disabled:opacity-50"
-                      title="Delete logo"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300">
-                    <Upload className="w-8 h-8 text-slate-400" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1">
-                <p className="text-sm text-slate-600 mb-3">
-                  Upload a logo for your club. It will appear on your raffle pages.
-                </p>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="logo-upload"
-                />
-
-                <label
-                  htmlFor="logo-upload"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
-                    uploading
-                      ? 'bg-slate-400 text-white cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  <Upload className="w-4 h-4" />
-                  {uploading ? 'Uploading...' : club.logo_url ? 'Change Logo' : 'Upload Logo'}
-                </label>
-
-                <p className="text-xs text-slate-500 mt-2">
-                  PNG, JPG or SVG. Max 5MB. Recommended size: 200x200px
-                </p>
               </div>
             </div>
           </div>

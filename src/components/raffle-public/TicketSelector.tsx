@@ -302,6 +302,18 @@ export default function TicketSelector({
         <span className="text-xl">→</span>
       </button>
 
+      <p className="text-xs text-slate-500 text-center mt-3">
+        By purchasing tickets you agree to our{' '}
+        <a href="/participant-terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+          Participant Terms
+        </a>
+        {' '}and{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+          Privacy Policy
+        </a>
+        .
+      </p>
+
       <p className="text-xs text-slate-400 text-center mt-3 mb-6">
         No account required. Your payment is secure and encrypted.
       </p>

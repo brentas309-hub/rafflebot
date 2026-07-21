@@ -164,7 +164,7 @@ export async function getRaffleById(id: string) {
 
 export async function updateRaffleStatus(
   raffleId: string,
-  status: 'draft' | 'open' | 'closed' | 'drawn'
+  status: 'draft' | 'open' | 'closed' | 'drawn' | 'paused'
 ) {
   const { data, error } = await supabase
     .from('raffles')

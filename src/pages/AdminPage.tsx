@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { signOut } from '../lib/auth';
+import { updateRaffleStatus } from '../services/raffleService';
 import RafflebotLogo from '../components/RafflebotLogo';
 
 type Organisation = {
@@ -18,10 +19,31 @@ type Organisation = {
   created_at: string;
   status: string | null;
   rejection_reason: string | null;
+  is_suspended: boolean | null;
 };
 
-type Tab = 'pending' | 'organisations';
-type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
+type Raffle = {
+  id: string;
+  title: string | null;
+  ticket_price: number | null;
+  total_tickets: number | null;
+  tickets_remaining: number | null;
+  status: string | null;
+  created_at: string;
+  owner_user_id: string | null;
+  slug: string | null;
+};
+
+type OrgLookup = {
+  id: string;
+  organisation_name: string | null;
+  owner_user_id: string | null;
+  is_suspended: boolean | null;
+};
+
+type Tab = 'pending' | 'organisations' | 'raffles';
+type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'suspended';
+type RaffleStatusFilter = 'all' | 'draft' | 'open' | 'paused' | 'closed' | 'drawn';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-AU', {
@@ -44,6 +66,23 @@ function statusBadgeClass(status: string | null) {
   }
 }
 
+function raffleStatusBadgeClass(status: string | null) {
+  switch (status) {
+    case 'draft':
+      return 'bg-slate-50 text-slate-600 border-slate-200';
+    case 'open':
+      return 'bg-green-50 text-green-700 border-green-200';
+    case 'paused':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'closed':
+      return 'bg-gray-50 text-gray-600 border-gray-200';
+    case 'drawn':
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    default:
+      return 'bg-gray-50 text-gray-600 border-gray-200';
+  }
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('pending');
@@ -57,6 +96,16 @@ export default function AdminPage() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
+  const [orgLookup, setOrgLookup] = useState<Record<string, OrgLookup>>({});
+  const [loadingRaffles, setLoadingRaffles] = useState(false);
+  const [rafflesLoaded, setRafflesLoaded] = useState(false);
+  const [raffleStatusFilter, setRaffleStatusFilter] = useState<RaffleStatusFilter>('all');
+  const [confirmingPause, setConfirmingPause] = useState<string | null>(null);
+  const [confirmingUnpause, setConfirmingUnpause] = useState<string | null>(null);
+  const [confirmingSuspend, setConfirmingSuspend] = useState<string | null>(null);
+  const [confirmingUnsuspend, setConfirmingUnsuspend] = useState<string | null>(null);
+
   useEffect(() => {
     async function loadPending() {
       setLoadingPending(true);
@@ -65,8 +114,6 @@ export default function AdminPage() {
         .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: true });
-
-      console.log('Pending orgs query result:', { data, error });
 
       if (error) {
         console.error(error);
@@ -100,6 +147,123 @@ export default function AdminPage() {
     }
     loadOrgs();
   }, [tab, orgsLoaded]);
+
+  useEffect(() => {
+    if (tab !== 'raffles' || rafflesLoaded) return;
+
+    async function loadRaffles() {
+      setLoadingRaffles(true);
+      const [rafflesRes, orgsRes] = await Promise.all([
+        supabase
+          .from('raffles')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('organisations')
+          .select('id, organisation_name, owner_user_id, is_suspended'),
+      ]);
+
+      if (rafflesRes.error) {
+        console.error(rafflesRes.error);
+        setAllRaffles([]);
+      } else {
+        setAllRaffles((rafflesRes.data as Raffle[]) ?? []);
+      }
+
+      if (orgsRes.error) {
+        console.error(orgsRes.error);
+      } else {
+        const lookup: Record<string, OrgLookup> = {};
+        for (const org of orgsRes.data ?? []) {
+          if (org.owner_user_id) lookup[org.owner_user_id] = org as OrgLookup;
+        }
+        setOrgLookup(lookup);
+      }
+
+      setRafflesLoaded(true);
+      setLoadingRaffles(false);
+    }
+    loadRaffles();
+  }, [tab, rafflesLoaded]);
+
+  function getClubName(raffle: Raffle): string {
+    if (!raffle.owner_user_id) return '—';
+    return orgLookup[raffle.owner_user_id]?.organisation_name || '—';
+  }
+
+  function getSold(raffle: Raffle): string {
+    if (raffle.total_tickets == null) return '—';
+    if (raffle.tickets_remaining == null) return '—';
+    return String(raffle.total_tickets - raffle.tickets_remaining);
+  }
+
+  async function handlePause(raffle: Raffle) {
+    setActionLoading(raffle.id);
+    try {
+      await updateRaffleStatus(raffle.id, 'paused');
+      setAllRaffles((prev) =>
+        prev.map((r) => (r.id === raffle.id ? { ...r, status: 'paused' } : r)),
+      );
+      console.log('TODO: send raffle-paused email');
+    } catch (err: any) {
+      alert(`Failed to pause raffle: ${err.message || err}`);
+    }
+    setConfirmingPause(null);
+    setActionLoading(null);
+  }
+
+  async function handleUnpause(raffle: Raffle) {
+    setActionLoading(raffle.id);
+    try {
+      await updateRaffleStatus(raffle.id, 'open');
+      setAllRaffles((prev) =>
+        prev.map((r) => (r.id === raffle.id ? { ...r, status: 'open' } : r)),
+      );
+      console.log('TODO: send raffle-unpaused email');
+    } catch (err: any) {
+      alert(`Failed to unpause raffle: ${err.message || err}`);
+    }
+    setConfirmingUnpause(null);
+    setActionLoading(null);
+  }
+
+  async function handleSuspend(org: Organisation) {
+    setActionLoading(org.id);
+    const { error } = await supabase
+      .from('organisations')
+      .update({ is_suspended: true })
+      .eq('id', org.id);
+
+    if (error) {
+      alert(`Failed to suspend organisation: ${error.message}`);
+    } else {
+      setAllOrgs((prev) =>
+        prev.map((o) => (o.id === org.id ? { ...o, is_suspended: true } : o)),
+      );
+      console.log('TODO: send org-suspended email');
+    }
+    setConfirmingSuspend(null);
+    setActionLoading(null);
+  }
+
+  async function handleUnsuspend(org: Organisation) {
+    setActionLoading(org.id);
+    const { error } = await supabase
+      .from('organisations')
+      .update({ is_suspended: false })
+      .eq('id', org.id);
+
+    if (error) {
+      alert(`Failed to unsuspend organisation: ${error.message}`);
+    } else {
+      setAllOrgs((prev) =>
+        prev.map((o) => (o.id === org.id ? { ...o, is_suspended: false } : o)),
+      );
+      console.log('TODO: send org-unsuspended email');
+    }
+    setConfirmingUnsuspend(null);
+    setActionLoading(null);
+  }
 
   async function handleApprove(org: Organisation) {
     setActionLoading(org.id);
@@ -165,14 +329,31 @@ export default function AdminPage() {
   const filteredOrgs =
     statusFilter === 'all'
       ? allOrgs
-      : allOrgs.filter((o) => o.status === statusFilter);
+      : statusFilter === 'suspended'
+        ? allOrgs.filter((o) => o.is_suspended === true)
+        : allOrgs.filter((o) => o.status === statusFilter);
 
   const filters: { key: StatusFilter; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
     { key: 'approved', label: 'Approved' },
     { key: 'rejected', label: 'Rejected' },
+    { key: 'suspended', label: 'Suspended' },
   ];
+
+  const raffleFilters: { key: RaffleStatusFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'draft', label: 'Draft' },
+    { key: 'open', label: 'Open' },
+    { key: 'paused', label: 'Paused' },
+    { key: 'closed', label: 'Closed' },
+    { key: 'drawn', label: 'Drawn' },
+  ];
+
+  const filteredRaffles =
+    raffleStatusFilter === 'all'
+      ? allRaffles
+      : allRaffles.filter((r) => r.status === raffleStatusFilter);
 
   return (
     <div
@@ -229,6 +410,17 @@ export default function AdminPage() {
             }`}
           >
             Organisations
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('raffles')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === 'raffles'
+                ? 'border-[#2366E6] text-[#2366E6]'
+                : 'border-transparent text-[#667085] hover:text-[#111827]'
+            }`}
+          >
+            Raffles
           </button>
         </div>
 
@@ -399,13 +591,14 @@ export default function AdminPage() {
                         <th className="px-4 py-3">Status</th>
                         <th className="px-4 py-3">Stripe connected</th>
                         <th className="px-4 py-3">Signed up</th>
+                        <th className="px-4 py-3"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrgs.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={7}
                             className="px-4 py-10 text-center text-[#667085]"
                           >
                             No organisations found
@@ -427,11 +620,18 @@ export default function AdminPage() {
                               {org.region || '—'}
                             </td>
                             <td className="px-4 py-3">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border capitalize ${statusBadgeClass(org.status)}`}
-                              >
-                                {org.status || '—'}
-                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border capitalize ${statusBadgeClass(org.status)}`}
+                                >
+                                  {org.status || '—'}
+                                </span>
+                                {org.is_suspended && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border bg-red-50 text-red-700 border-red-200">
+                                    Suspended
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3">
                               {org.stripe_account_id ? (
@@ -446,6 +646,250 @@ export default function AdminPage() {
                             </td>
                             <td className="px-4 py-3 text-[#667085] whitespace-nowrap">
                               {formatDate(org.created_at)}
+                            </td>
+                            <td className="px-4 py-3">
+                              {!org.is_suspended ? (
+                                confirmingSuspend === org.id ? (
+                                  <div className="flex flex-col gap-1.5">
+                                    <p className="text-xs text-[#374151]">
+                                      Suspend <strong>{org.organisation_name}</strong>?
+                                      All their raffles will stop selling tickets immediately.
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        disabled={actionLoading === org.id}
+                                        onClick={() => handleSuspend(org)}
+                                        className="h-7 px-3 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-40"
+                                      >
+                                        Confirm suspend
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmingSuspend(null)}
+                                        className="h-7 px-3 rounded-lg border border-[#E6ECF5] text-xs text-[#667085] hover:bg-[#F8FAFC]"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={actionLoading === org.id}
+                                    onClick={() => setConfirmingSuspend(org.id)}
+                                    className="h-7 px-3 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-40"
+                                  >
+                                    Suspend
+                                  </button>
+                                )
+                              ) : confirmingUnsuspend === org.id ? (
+                                <div className="flex flex-col gap-1.5">
+                                  <p className="text-xs text-[#374151]">
+                                    Unsuspend <strong>{org.organisation_name}</strong>?
+                                    Their raffles will resume selling.
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={actionLoading === org.id}
+                                      onClick={() => handleUnsuspend(org)}
+                                      className="h-7 px-3 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-40"
+                                    >
+                                      Confirm unsuspend
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmingUnsuspend(null)}
+                                      className="h-7 px-3 rounded-lg border border-[#E6ECF5] text-xs text-[#667085] hover:bg-[#F8FAFC]"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={actionLoading === org.id}
+                                  onClick={() => setConfirmingUnsuspend(org.id)}
+                                  className="h-7 px-3 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-40"
+                                >
+                                  Unsuspend
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'raffles' && (
+          <div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {raffleFilters.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setRaffleStatusFilter(f.key)}
+                  className={`h-8 px-3 rounded-full text-xs font-medium transition-colors ${
+                    raffleStatusFilter === f.key
+                      ? 'bg-[#2366E6] text-white'
+                      : 'bg-white border border-[#E6ECF5] text-[#667085] hover:border-[#C9D8F4]'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {loadingRaffles ? (
+              <p className="text-sm text-[#667085] py-12 text-center">Loading…</p>
+            ) : (
+              <div className="bg-white border border-[#E6ECF5] rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#E6ECF5] bg-[#F8FAFC] text-left text-xs font-medium text-[#667085] uppercase tracking-wide">
+                        <th className="px-4 py-3">Title</th>
+                        <th className="px-4 py-3">Club name</th>
+                        <th className="px-4 py-3">Ticket price</th>
+                        <th className="px-4 py-3">Sold</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Created</th>
+                        <th className="px-4 py-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredRaffles.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={7}
+                            className="px-4 py-10 text-center text-[#667085]"
+                          >
+                            No raffles found
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredRaffles.map((raffle) => (
+                          <tr
+                            key={raffle.id}
+                            className="border-b border-[#E6ECF5] last:border-0 hover:bg-[#F8FAFC]"
+                          >
+                            <td className="px-4 py-3 font-medium text-[#111827]">
+                              {raffle.title || '—'}
+                            </td>
+                            <td className="px-4 py-3 text-[#374151]">
+                              {getClubName(raffle)}
+                            </td>
+                            <td className="px-4 py-3 text-[#374151]">
+                              {raffle.ticket_price != null
+                                ? `$${Number(raffle.ticket_price).toFixed(2)}`
+                                : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-[#374151]">
+                              {getSold(raffle)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border capitalize ${raffleStatusBadgeClass(raffle.status)}`}
+                              >
+                                {raffle.status || '—'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-[#667085] whitespace-nowrap">
+                              {formatDate(raffle.created_at)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-2 items-start">
+                              {raffle.slug && (
+                                <a
+                                  href={'/r/' + raffle.slug}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex h-7 items-center px-3 rounded-lg border border-[#E6ECF5] text-xs font-medium text-[#667085] hover:bg-[#F8FAFC]"
+                                >
+                                  View
+                                </a>
+                              )}
+                              {raffle.status === 'open' && (
+                                confirmingPause === raffle.id ? (
+                                  <div className="flex flex-col gap-1.5">
+                                    <p className="text-xs text-[#374151]">
+                                      Pause <strong>{raffle.title}</strong> ({getClubName(raffle)})?
+                                      Ticket sales will stop immediately.
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        disabled={actionLoading === raffle.id}
+                                        onClick={() => handlePause(raffle)}
+                                        className="h-7 px-3 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-40"
+                                      >
+                                        Confirm pause
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmingPause(null)}
+                                        className="h-7 px-3 rounded-lg border border-[#E6ECF5] text-xs text-[#667085] hover:bg-[#F8FAFC]"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={actionLoading === raffle.id}
+                                    onClick={() => setConfirmingPause(raffle.id)}
+                                    className="h-7 px-3 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-40"
+                                  >
+                                    Pause
+                                  </button>
+                                )
+                              )}
+                              {raffle.status === 'paused' && (
+                                confirmingUnpause === raffle.id ? (
+                                  <div className="flex flex-col gap-1.5">
+                                    <p className="text-xs text-[#374151]">
+                                      Unpause <strong>{raffle.title}</strong> ({getClubName(raffle)})?
+                                      Ticket sales will resume.
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        disabled={actionLoading === raffle.id}
+                                        onClick={() => handleUnpause(raffle)}
+                                        className="h-7 px-3 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-40"
+                                      >
+                                        Confirm unpause
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmingUnpause(null)}
+                                        className="h-7 px-3 rounded-lg border border-[#E6ECF5] text-xs text-[#667085] hover:bg-[#F8FAFC]"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={actionLoading === raffle.id}
+                                    onClick={() => setConfirmingUnpause(raffle.id)}
+                                    className="h-7 px-3 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-40"
+                                  >
+                                    Unpause
+                                  </button>
+                                )
+                              )}
+                              </div>
                             </td>
                           </tr>
                         ))

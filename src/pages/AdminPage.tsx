@@ -16,6 +16,7 @@ type Organisation = {
   registration_type: string | null;
   registration_number: string | null;
   stripe_account_id: string | null;
+  stripe_onboarding_complete: boolean | null;
   created_at: string;
   status: string | null;
   rejection_reason: string | null;
@@ -56,6 +57,7 @@ function formatDate(iso: string) {
 function statusBadgeClass(status: string | null) {
   switch (status) {
     case 'pending':
+    case 'pending_review':
       return 'bg-amber-50 text-amber-700 border-amber-200';
     case 'approved':
       return 'bg-green-50 text-green-700 border-green-200';
@@ -64,6 +66,33 @@ function statusBadgeClass(status: string | null) {
     default:
       return 'bg-gray-50 text-gray-600 border-gray-200';
   }
+}
+
+function statusLabel(status: string | null) {
+  if (status === 'pending_review') return 'Pending review';
+  return status || '—';
+}
+
+function stripeStatusIndicator(org: Organisation, sizeClass = '') {
+  if (org.stripe_onboarding_complete === true) {
+    return (
+      <span className={`text-green-600 font-medium ${sizeClass}`.trim()}>
+        Connected ✓
+      </span>
+    );
+  }
+  if (org.stripe_account_id) {
+    return (
+      <span className={`text-amber-600 font-medium ${sizeClass}`.trim()}>
+        In progress
+      </span>
+    );
+  }
+  return (
+    <span className={`text-red-600 font-medium ${sizeClass}`.trim()}>
+      Not connected ✗
+    </span>
+  );
 }
 
 function raffleStatusBadgeClass(status: string | null) {
@@ -112,7 +141,7 @@ export default function AdminPage() {
       const { data, error } = await supabase
         .from('organisations')
         .select('*')
-        .eq('status', 'pending')
+        .eq('status', 'pending_review')
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -331,7 +360,9 @@ export default function AdminPage() {
       ? allOrgs
       : statusFilter === 'suspended'
         ? allOrgs.filter((o) => o.is_suspended === true)
-        : allOrgs.filter((o) => o.status === statusFilter);
+        : statusFilter === 'pending'
+          ? allOrgs.filter((o) => o.status === 'pending_review')
+          : allOrgs.filter((o) => o.status === statusFilter);
 
   const filters: { key: StatusFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -471,11 +502,7 @@ export default function AdminPage() {
                       </div>
                       <div>
                         <span className="text-[#667085]">Stripe connected: </span>
-                        {org.stripe_account_id ? (
-                          <span className="text-green-600 font-medium">Connected ✓</span>
-                        ) : (
-                          <span className="text-red-600 font-medium">Not connected ✗</span>
-                        )}
+                        {stripeStatusIndicator(org)}
                       </div>
                       <div>
                         <span className="text-[#667085]">Signed up: </span>
@@ -624,7 +651,7 @@ export default function AdminPage() {
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border capitalize ${statusBadgeClass(org.status)}`}
                                 >
-                                  {org.status || '—'}
+                                  {statusLabel(org.status)}
                                 </span>
                                 {org.is_suspended && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border bg-red-50 text-red-700 border-red-200">
@@ -634,15 +661,7 @@ export default function AdminPage() {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              {org.stripe_account_id ? (
-                                <span className="text-green-600 text-xs font-medium">
-                                  Connected ✓
-                                </span>
-                              ) : (
-                                <span className="text-red-600 text-xs font-medium">
-                                  Not connected ✗
-                                </span>
-                              )}
+                              {stripeStatusIndicator(org, 'text-xs')}
                             </td>
                             <td className="px-4 py-3 text-[#667085] whitespace-nowrap">
                               {formatDate(org.created_at)}

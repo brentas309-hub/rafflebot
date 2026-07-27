@@ -25,6 +25,7 @@ import ParticipantTermsPage from './components/legal/ParticipantTermsPage';
 import TrustSafetyPage from './components/legal/TrustSafetyPage';
 import AdminRoute from './components/AdminRoute';
 import AdminPage from './pages/AdminPage';
+import ResetPassword from './components/ResetPassword';
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
 
       <Route path="/success" element={<Success />} />
       <Route path="/cancel" element={<Cancel />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/organizer-terms" element={<OrganizerTermsPage />} />

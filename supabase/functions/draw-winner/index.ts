@@ -4,6 +4,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -49,7 +51,7 @@ Deno.serve(async (req) => {
     }
 
     const raffleRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/raffles?id=eq.${raffleId}&select=id,status,owner_user_id,number_of_prizes`,
+      `${SUPABASE_URL}/rest/v1/raffles?id=eq.${raffleId}&select=id,status,owner_user_id,number_of_prizes,title`,
       {
         headers: {
           apikey: SERVICE_ROLE_KEY,
@@ -86,6 +88,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const raffleTitle = raffle.title || "the raffle";
 
     const purchasesRes = await fetch(
       `${SUPABASE_URL}/rest/v1/purchases?raffle_id=eq.${raffleId}&select=id,email,buyer_name,buyer_phone,quantity`,
@@ -190,6 +194,45 @@ Deno.serve(async (req) => {
         phone: winner.buyer_phone,
         purchase_id: winner.purchaseId,
       });
+
+      // ✅ EMAIL #2 — SEND WINNER NOTIFICATION
+      if (winner.email) {
+        try {
+          const emailRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "RaffleBot <support@getrafflebot.com>",
+              to: winner.email,
+              subject: `🎉 You won! — ${raffleTitle}`,
+              text: `Hi ${winner.buyer_name || "there"},
+
+Congratulations! You've won a prize in the raffle:
+
+Raffle: ${raffleTitle}
+Prize number: ${prizeNumber}
+
+The organisation running this raffle will be in touch with you directly regarding prize collection or delivery.
+
+This is an automated notification — please do not reply directly to this message. If you have any questions, please contact the raffle organiser directly.
+
+— Team RaffleBot`,
+            }),
+          });
+
+          if (!emailRes.ok) {
+            const emailErrorText = await emailRes.text();
+            console.error(`❌ Winner email failed for prize ${prizeNumber}:`, emailErrorText);
+          } else {
+            console.log(`✅ Winner email sent for prize ${prizeNumber} to:`, winner.email);
+          }
+        } catch (emailErr) {
+          console.error(`❌ Winner email crash for prize ${prizeNumber}:`, emailErr);
+        }
+      }
 
       weightedPool = weightedPool.filter(entry => entry.purchaseId !== winner.purchaseId);
     }

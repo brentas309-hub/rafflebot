@@ -40,6 +40,8 @@ type OrgLookup = {
   organisation_name: string | null;
   owner_user_id: string | null;
   is_suspended: boolean | null;
+  contact_email: string;
+  contact_first_name: string;
 };
 
 type Tab = 'pending' | 'organisations' | 'raffles';
@@ -189,7 +191,7 @@ export default function AdminPage() {
           .order('created_at', { ascending: false }),
         supabase
           .from('organisations')
-          .select('id, organisation_name, owner_user_id, is_suspended'),
+          .select('id, organisation_name, owner_user_id, is_suspended, contact_email, contact_first_name'),
       ]);
 
       if (rafflesRes.error) {
@@ -233,7 +235,32 @@ export default function AdminPage() {
       setAllRaffles((prev) =>
         prev.map((r) => (r.id === raffle.id ? { ...r, status: 'paused' } : r)),
       );
-      console.log('TODO: send raffle-paused email');
+      try {
+        const org = orgLookup[raffle.owner_user_id];
+        if (org?.contact_email) {
+          const { data: { session } } = await supabase.auth.getSession();
+          const emailRes = await fetch('https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/send-club-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              type: 'raffle_paused',
+              to: org.contact_email,
+              orgName: org.organisation_name,
+              firstName: org.contact_first_name,
+            }),
+          });
+          if (emailRes.ok) {
+            console.log('✅ Raffle paused email sent to:', org.contact_email);
+          } else {
+            console.error('❌ Raffle paused email failed:', await emailRes.text());
+          }
+        }
+      } catch (emailErr) {
+        console.error('❌ Raffle paused email crash:', emailErr);
+      }
     } catch (err: any) {
       alert(`Failed to pause raffle: ${err.message || err}`);
     }

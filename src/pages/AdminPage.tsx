@@ -269,7 +269,29 @@ export default function AdminPage() {
       setAllOrgs((prev) =>
         prev.map((o) => (o.id === org.id ? { ...o, is_suspended: true } : o)),
       );
-      console.log('TODO: send org-suspended email');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const emailRes = await fetch('https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/send-club-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            type: 'org_suspended',
+            to: org.contact_email,
+            orgName: org.organisation_name,
+            firstName: org.contact_first_name,
+          }),
+        });
+        if (emailRes.ok) {
+          console.log('✅ Suspension email sent to:', org.contact_email);
+        } else {
+          console.error('❌ Suspension email failed:', await emailRes.text());
+        }
+      } catch (emailErr) {
+        console.error('❌ Suspension email crash:', emailErr);
+      }
     }
     setConfirmingSuspend(null);
     setActionLoading(null);
@@ -288,7 +310,29 @@ export default function AdminPage() {
       setAllOrgs((prev) =>
         prev.map((o) => (o.id === org.id ? { ...o, is_suspended: false } : o)),
       );
-      console.log('TODO: send org-unsuspended email');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const emailRes = await fetch('https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/send-club-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            type: 'org_reinstated',
+            to: org.contact_email,
+            orgName: org.organisation_name,
+            firstName: org.contact_first_name,
+          }),
+        });
+        if (emailRes.ok) {
+          console.log('✅ Reinstatement email sent to:', org.contact_email);
+        } else {
+          console.error('❌ Reinstatement email failed:', await emailRes.text());
+        }
+      } catch (emailErr) {
+        console.error('❌ Reinstatement email crash:', emailErr);
+      }
     }
     setConfirmingUnsuspend(null);
     setActionLoading(null);
@@ -317,7 +361,29 @@ export default function AdminPage() {
         prev.map((o) => (o.id === org.id ? org : o)),
       );
     } else {
-      console.log('TODO: send club approved email');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const emailRes = await fetch('https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/send-club-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            type: 'club_approved',
+            to: org.contact_email,
+            orgName: org.organisation_name,
+            firstName: org.contact_first_name,
+          }),
+        });
+        if (emailRes.ok) {
+          console.log('✅ Approval email sent to:', org.contact_email);
+        } else {
+          console.error('❌ Approval email failed:', await emailRes.text());
+        }
+      } catch (emailErr) {
+        console.error('❌ Approval email crash:', emailErr);
+      }
     }
     setActionLoading(null);
   }
@@ -350,7 +416,30 @@ export default function AdminPage() {
         prev.map((o) => (o.id === org.id ? org : o)),
       );
     } else {
-      console.log('TODO: send club rejected email', reason);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const emailRes = await fetch('https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/send-club-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            type: 'club_unsuccessful',
+            to: org.contact_email,
+            orgName: org.organisation_name,
+            firstName: org.contact_first_name,
+            reason,
+          }),
+        });
+        if (emailRes.ok) {
+          console.log('✅ Unsuccessful email sent to:', org.contact_email);
+        } else {
+          console.error('❌ Unsuccessful email failed:', await emailRes.text());
+        }
+      } catch (emailErr) {
+        console.error('❌ Unsuccessful email crash:', emailErr);
+      }
     }
     setActionLoading(null);
   }

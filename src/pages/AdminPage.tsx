@@ -275,7 +275,32 @@ export default function AdminPage() {
       setAllRaffles((prev) =>
         prev.map((r) => (r.id === raffle.id ? { ...r, status: 'open' } : r)),
       );
-      console.log('TODO: send raffle-unpaused email');
+      try {
+        const org = orgLookup[raffle.owner_user_id];
+        if (org?.contact_email) {
+          const { data: { session } } = await supabase.auth.getSession();
+          const emailRes = await fetch('https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/send-club-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              type: 'raffle_unpaused',
+              to: org.contact_email,
+              orgName: org.organisation_name,
+              firstName: org.contact_first_name,
+            }),
+          });
+          if (emailRes.ok) {
+            console.log('✅ Raffle unpaused email sent to:', org.contact_email);
+          } else {
+            console.error('❌ Raffle unpaused email failed:', await emailRes.text());
+          }
+        }
+      } catch (emailErr) {
+        console.error('❌ Raffle unpaused email crash:', emailErr);
+      }
     } catch (err: any) {
       alert(`Failed to unpause raffle: ${err.message || err}`);
     }

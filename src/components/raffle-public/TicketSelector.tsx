@@ -48,6 +48,15 @@ const TICKET_OPTIONS = [
   { quantity: 10, label: '10 tickets' }
 ];
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 8;
+}
+
 export default function TicketSelector({
   raffle,
   stats,
@@ -62,6 +71,8 @@ export default function TicketSelector({
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const ticketTotal = raffle.ticket_price * selectedQuantity;
   const currencySymbol = getCurrencySymbol(currency);
@@ -72,6 +83,14 @@ export default function TicketSelector({
   const handleBuyTickets = async () => {
     if (!buyerName || !buyerEmail || !buyerPhone) {
       alert('Please fill in your name, email and phone number');
+      return;
+    }
+    if (!isValidEmail(buyerEmail)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    if (!isValidPhone(buyerPhone)) {
+      setPhoneError('Please enter a valid phone number');
       return;
     }
     setIsProcessing(true);
@@ -244,18 +263,26 @@ export default function TicketSelector({
           type="email"
           placeholder="Email address"
           value={buyerEmail}
-          onChange={(e) => setBuyerEmail(e.target.value)}
+          onChange={(e) => {
+            setBuyerEmail(e.target.value);
+            setEmailError('');
+          }}
           className="w-full px-4 py-3 rounded-xl text-slate-900 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           style={{ border: "1px solid #E2E8F0" }}
         />
+        {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
         <input
           type="tel"
           placeholder="Phone number"
           value={buyerPhone}
-          onChange={(e) => setBuyerPhone(e.target.value)}
+          onChange={(e) => {
+            setBuyerPhone(e.target.value);
+            setPhoneError('');
+          }}
           className="w-full px-4 py-3 rounded-xl text-slate-900 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           style={{ border: "1px solid #E2E8F0" }}
         />
+        {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
       </div>
 
       {/* Trust row */}

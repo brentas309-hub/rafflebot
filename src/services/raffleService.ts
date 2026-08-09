@@ -76,67 +76,6 @@ export async function createRaffle(
   return { ...(data as any), slug: (data as any)?.slug ?? slug } as Raffle;
 }
 
-export async function generateTickets(raffleId: string, totalTickets: number) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    console.error('No session found');
-    throw new Error('Not authenticated');
-  }
-
-  console.log('=== Frontend: Starting ticket generation ===');
-  console.log('Raffle ID:', raffleId);
-  console.log('Total Tickets:', totalTickets);
-  console.log('User token present:', !!session.access_token);
-
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-tickets`;
-  console.log('Edge function URL:', url);
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        raffleId,
-        totalTickets,
-      }),
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-    const responseText = await response.text();
-    console.log('Response body:', responseText);
-
-    let responseData;
-    try {
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      console.error('Failed to parse response as JSON:', e);
-      throw new Error(`Invalid response from server: ${responseText.substring(0, 100)}`);
-    }
-
-    if (!response.ok) {
-      console.error('=== Ticket generation failed ===');
-      console.error('Status:', response.status);
-      console.error('Error data:', responseData);
-
-      const errorMessage = responseData.details || responseData.error || 'Failed to generate tickets';
-      throw new Error(`${errorMessage} (Status: ${response.status})`);
-    }
-
-    console.log('=== Tickets generated successfully ===');
-    console.log('Result:', responseData);
-    return responseData;
-  } catch (error) {
-    console.error('=== Frontend: Ticket generation error ===');
-    console.error('Error:', error);
-    throw error;
-  }
-}
-
 export async function getRaffles() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');

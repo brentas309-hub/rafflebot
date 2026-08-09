@@ -1,18 +1,5 @@
 import { supabase } from './supabase';
 
-export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  return userData;
-}
-
 export async function getCurrentSession() {
   const { data: { session } } = await supabase.auth.getSession();
   return session;

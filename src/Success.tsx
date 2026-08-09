@@ -20,6 +20,13 @@ export default function Success() {
   const [ticketTotal, setTicketTotal] = useState(0);
   const [ticketsRemaining, setTicketsRemaining] = useState(0);
   const [instagramCopied, setInstagramCopied] = useState(false);
+  const [orgName, setOrgName] = useState<string>("your club");
+  const [raffleData, setRaffleData] = useState<{
+    id: string;
+    total_tickets: number;
+    owner_user_id: string | null;
+    draw_timestamp: string | null;
+  } | null>(null);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -62,13 +69,24 @@ export default function Success() {
           setRaffleStatsPhase("loading");
           const { data: raffleRow, error: raffleErr } = await supabase
             .from("raffles")
-            .select("id, total_tickets")
+            .select("id, total_tickets, owner_user_id, draw_timestamp")
             .eq("slug", slug)
             .maybeSingle();
 
           if (raffleErr || !raffleRow?.id) {
             setRaffleStatsPhase("error");
           } else {
+            setRaffleData(raffleRow);
+            if (raffleRow?.owner_user_id) {
+              const { data: orgData } = await supabase
+                .from("organisations")
+                .select("organisation_name")
+                .eq("owner_user_id", raffleRow.owner_user_id)
+                .maybeSingle();
+              if (orgData?.organisation_name) {
+                setOrgName(orgData.organisation_name);
+              }
+            }
             const { data: statsRows, error: statsErr } = await supabase.rpc(
               "get_raffle_stats",
               { p_raffle_id: raffleRow.id }
@@ -239,7 +257,7 @@ export default function Success() {
               Thank you for supporting
             </p>
             <p className="font-black text-2xl" style={{ color: "#2366E6" }}>
-              Springfield United FC!
+              {orgName}
             </p>
             <p className="text-slate-400 text-xs mt-2">
               Your ticket has been successfully entered into the draw.
@@ -251,7 +269,9 @@ export default function Success() {
             {[
               { label: "Ticket(s)", value: String(quantity) },
               { label: "Total paid", value: `$${(amount / 100).toFixed(2)}` },
-              { label: "Draw date", value: "—" },
+              { label: "Draw date", value: raffleData?.draw_timestamp
+                  ? new Date(raffleData.draw_timestamp).toLocaleDateString("en-NZ", { day: "numeric", month: "long", year: "numeric" })
+                  : "To be confirmed" },
             ].map(({ label, value }) => (
               <div
                 key={label}

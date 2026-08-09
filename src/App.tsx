@@ -53,7 +53,7 @@ export default function App() {
 
       <Route path="/raffle/:raffleSlug" element={<PublicRafflePage />} />
       <Route path="/public-raffle/:raffleSlug" element={<PublicRafflePage />} />
-      <Route path="/r/:raffleId" element={<PublicRafflePage />} />
+      <Route path="/r/:raffleSlug" element={<PublicRafflePage />} />
 
       <Route path="/success" element={<Success />} />
       <Route path="/cancel" element={<Cancel />} />

@@ -7,6 +7,7 @@ interface RaffleData {
   ticket_price: number;
   processing_fee_mode: 'buyer_pays' | 'club_absorbs';
   slug: string; // ✅ IMPORTANT (we use this now)
+  status?: string;
 }
 
 interface RaffleStats {
@@ -20,6 +21,7 @@ interface TicketSelectorProps {
   onQuantityChange: (quantity: number) => void;
   stripeAccountId?: string;
   stripe_onboarding_complete?: boolean | null;
+  is_suspended?: boolean | null;
   referralCode?: string | null;
   onPurchaseSuccess?: (purchaseId: string) => void;
   currency?: string;
@@ -64,6 +66,7 @@ export default function TicketSelector({
   onQuantityChange,
   stripeAccountId = "",
   stripe_onboarding_complete,
+  is_suspended,
   currency = "NZD",
 }: TicketSelectorProps) {
 
@@ -77,7 +80,10 @@ export default function TicketSelector({
   const ticketTotal = raffle.ticket_price * selectedQuantity;
   const currencySymbol = getCurrencySymbol(currency);
 
-  const ticketsAvailable = stripe_onboarding_complete === true;
+  const ticketsUnavailable =
+    raffle.status === 'paused' ||
+    is_suspended === true ||
+    stripe_onboarding_complete !== true;
 
   // ✅ STRIPE CHECKOUT FUNCTION (FIXED)
   const handleBuyTickets = async () => {
@@ -133,7 +139,14 @@ export default function TicketSelector({
     }
   };
 
-  if (!ticketsAvailable) {
+  if (ticketsUnavailable) {
+    const unavailableMessage =
+      raffle.status === 'paused'
+        ? "This raffle is currently paused. Please check back later."
+        : is_suspended === true
+          ? "This organisation's raffles are temporarily unavailable."
+          : "Tickets are not yet available for this raffle";
+
     return (
       <div
         className="bg-white mb-6 p-6"
@@ -151,7 +164,7 @@ export default function TicketSelector({
             background: "#F5F8FC",
           }}
         >
-          Tickets are not yet available for this raffle
+          {unavailableMessage}
         </div>
       </div>
     );

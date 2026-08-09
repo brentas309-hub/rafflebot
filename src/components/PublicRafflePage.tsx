@@ -11,6 +11,7 @@ type RaffleRow = {
   ticket_price: number | string;
   total_tickets?: number | string | null;
   slug: string | null;
+  status?: string | null;
   processing_fee_mode?: "buyer_pays" | "club_absorbs" | null;
   description?: string | null;
   prize_description?: string | null;
@@ -43,6 +44,7 @@ export default function PublicRafflePage() {
   const [stripeAccountId, setStripeAccountId] = useState<string>("");
   const [currency, setCurrency] = useState<string>("NZD");
   const [stripeOnboardingComplete, setStripeOnboardingComplete] = useState<boolean | null | undefined>(undefined);
+  const [isSuspended, setIsSuspended] = useState<boolean | null | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +56,7 @@ export default function PublicRafflePage() {
       setTotalRaisedCents(0);
       setStripeAccountId("");
       setStripeOnboardingComplete(undefined);
+      setIsSuspended(undefined);
 
       const slug = raffleSlug?.trim();
       const id = raffleId?.trim();
@@ -112,7 +115,7 @@ export default function PublicRafflePage() {
       if (row.owner_user_id) {
         const { data: orgData } = await supabase
           .from("organisations")
-          .select("stripe_account_id, default_currency, stripe_onboarding_complete")
+          .select("stripe_account_id, default_currency, stripe_onboarding_complete, is_suspended")
           .eq("owner_user_id", row.owner_user_id)
           .setHeader("Authorization", `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`)
           .maybeSingle();
@@ -123,6 +126,7 @@ export default function PublicRafflePage() {
           setCurrency(orgData.default_currency);
         }
         setStripeOnboardingComplete(orgData?.stripe_onboarding_complete);
+        setIsSuspended(orgData?.is_suspended);
       }
 
       setRaffle(row);
@@ -200,6 +204,7 @@ export default function PublicRafflePage() {
     ticket_price: safePrice,
     processing_fee_mode: feeMode,
     slug: raffle.slug ?? "",
+    status: raffle.status ?? undefined,
   };
 
   const totalTicketsRaw = Number(raffle.total_tickets);
@@ -381,6 +386,7 @@ export default function PublicRafflePage() {
           stripeAccountId={stripeAccountId}
           currency={currency}
           stripe_onboarding_complete={stripeOnboardingComplete}
+          is_suspended={isSuspended}
         />
       </div>
     </div>

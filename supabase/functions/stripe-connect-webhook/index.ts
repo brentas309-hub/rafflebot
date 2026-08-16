@@ -44,6 +44,30 @@ Deno.serve(async (req) => {
       `Received event: ${event.type} | connected account: ${event.account || "none"} | event id: ${event.id}`
     );
 
+    // ✅ NEW — account.updated: re-check real Stripe status when a connected
+    // account's status changes (e.g. later restricted after being approved).
+    // Mirrors the same charges_enabled check used in check-stripe-status.
+    if (event.type === "account.updated") {
+      const account = event.data.object;
+      const isComplete = account.charges_enabled === true;
+
+      const { error: updateError } = await supabase
+        .from("organisations")
+        .update({ stripe_onboarding_complete: isComplete })
+        .eq("stripe_account_id", account.id);
+
+      if (updateError) {
+        console.error("Failed to update org from account.updated:", updateError.message);
+      } else {
+        console.log(`account.updated processed for ${account.id}: stripe_onboarding_complete=${isComplete}`);
+      }
+
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // ✅ Only act on checkout.session.completed.
     // All other event types get a friendly 200 so Stripe never sees failures.
     if (event.type !== "checkout.session.completed") {

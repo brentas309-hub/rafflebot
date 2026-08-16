@@ -1,29 +1,41 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentSession } from '../../lib/auth';
-import { supabase } from '../../lib/supabase';
 
 export default function StripeSuccess() {
   const navigate = useNavigate();
   const [updating, setUpdating] = useState(true);
+  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    const markComplete = async () => {
+    const checkStatus = async () => {
       const session = await getCurrentSession();
       if (!session) {
         navigate('/onboarding/create-account');
         return;
       }
 
-      await supabase
-        .from('organisations')
-        .update({ stripe_onboarding_complete: true })
-        .eq('owner_user_id', session.user.id);
-
-      setUpdating(false);
+      try {
+        const res = await fetch(
+          'https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/check-stripe-status',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await res.json();
+        setIsComplete(data?.complete === true);
+      } catch (err) {
+        console.error('Stripe status check failed:', err);
+        setIsComplete(false);
+      } finally {
+        setUpdating(false);
+      }
     };
-
-    markComplete();
+    checkStatus();
   }, [navigate]);
 
   return (
@@ -77,28 +89,47 @@ export default function StripeSuccess() {
 
           {updating ? (
             <p className="text-center text-[#667085]">Finishing up…</p>
-          ) : (
+          ) : isComplete ? (
             <div className="text-center">
               <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               </div>
-
               <h1 className="text-3xl font-extrabold text-[#111827] tracking-tight mb-2">
                 Congratulations! 🎉
               </h1>
-
               <p className="text-[#667085] text-[0.95rem] mb-10">
                 You've successfully connected your Stripe account with RaffleBot.
                 You're ready to build your first raffle.
               </p>
-
               <button
                 onClick={() => navigate('/onboarding/create-raffle')}
                 className="w-full h-14 rounded-2xl bg-[#2366E6] text-base font-bold text-white transition-all duration-200 ease-in-out hover:bg-[#1D59CC] hover:-translate-y-px active:bg-[#184AAD]"
               >
                 Build my raffle →
+              </button>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-6">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4M12 16h.01" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-extrabold text-[#111827] tracking-tight mb-2">
+                Almost there
+              </h1>
+              <p className="text-[#667085] text-[0.95rem] mb-10">
+                Stripe still needs a bit more information before you can take payments.
+                You can pick up where you left off anytime from Club Settings.
+              </p>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full h-14 rounded-2xl bg-[#2366E6] text-base font-bold text-white transition-all duration-200 ease-in-out hover:bg-[#1D59CC] hover:-translate-y-px active:bg-[#184AAD]"
+              >
+                Go to Dashboard →
               </button>
             </div>
           )}

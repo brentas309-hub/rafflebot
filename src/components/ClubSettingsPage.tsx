@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X, Check, Building2, CreditCard } from 'lucide-react';
 import { getClubForCurrentUser, updateClubDetails, type ClubDetails } from '../services/clubService';
+import { getCurrentSession } from '../lib/auth';
 import RafflebotLogo from './RafflebotLogo';
 
 export default function ClubSettingsPage() {
@@ -11,6 +12,8 @@ export default function ClubSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -63,6 +66,46 @@ export default function ClubSettingsPage() {
       setError('Failed to save changes. Please try again.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleConnectStripe() {
+    setConnecting(true);
+    setStripeError(null);
+
+    try {
+      const session = await getCurrentSession();
+      if (!session) {
+        navigate('/onboarding/create-account');
+        return;
+      }
+
+      const res = await fetch(
+        'https://yathqgmoxvslywdgcmtn.supabase.co/functions/v1/create-connect-account',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const stripeData = await res.json();
+
+      if (!res.ok || !stripeData?.url) {
+        console.error('Stripe error:', stripeData);
+        setStripeError(stripeData?.error || 'Something went wrong. Please try again.');
+        setConnecting(false);
+        return;
+      }
+
+      window.location.href = stripeData.url;
+
+    } catch (err) {
+      console.error('Stripe connect error:', err);
+      setStripeError('Stripe connection failed. Please try again.');
+      setConnecting(false);
     }
   }
 
@@ -226,13 +269,21 @@ export default function ClubSettingsPage() {
               <div>
                 <p className="text-sm font-medium text-slate-700">Stripe Account</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  {club.stripe_account_id ? 'Connected' : 'Not connected'}
+                  {!club.stripe_account_id
+                    ? 'Not connected'
+                    : club.stripe_onboarding_complete === true
+                    ? 'Connected'
+                    : 'Connected — setup incomplete'}
                 </p>
               </div>
-              {club.stripe_account_id ? (
+              {club.stripe_account_id && club.stripe_onboarding_complete === true ? (
                 <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                   <Check className="w-4 h-4" />
                   Active
+                </div>
+              ) : club.stripe_account_id ? (
+                <div className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                  Incomplete
                 </div>
               ) : (
                 <div className="px-3 py-1 bg-slate-200 text-slate-600 rounded-full text-sm font-medium">
@@ -240,6 +291,18 @@ export default function ClubSettingsPage() {
                 </div>
               )}
             </div>
+            {club.stripe_onboarding_complete !== true && (
+              <button
+                onClick={handleConnectStripe}
+                disabled={connecting}
+                className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {connecting ? 'Connecting…' : 'Connect Stripe →'}
+              </button>
+            )}
+            {stripeError && (
+              <p className="text-red-600 text-sm mt-2">{stripeError}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4">

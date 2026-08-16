@@ -9,6 +9,7 @@ export interface ClubDetails {
   contact_phone: string | null;
   address: string | null;
   stripe_account_id: string | null;
+  stripe_onboarding_complete: boolean | null;
   logo_url: string | null;
 }
 
@@ -18,7 +19,7 @@ export async function getClubForCurrentUser(): Promise<ClubDetails | null> {
 
   const { data: org, error } = await supabase
     .from('organisations')
-    .select('id, organisation_name, contact_email, phone, contact_phone, address, stripe_account_id')
+    .select('id, organisation_name, contact_email, phone, contact_phone, address, stripe_account_id, stripe_onboarding_complete')
     .eq('owner_user_id', user.id)
     .maybeSingle();
 
@@ -33,6 +34,7 @@ export async function getClubForCurrentUser(): Promise<ClubDetails | null> {
     contact_phone: org.contact_phone ?? null,
     address: org.address ?? null,
     stripe_account_id: org.stripe_account_id ?? null,
+    stripe_onboarding_complete: org.stripe_onboarding_complete ?? null,
     logo_url: null, // logo feature not built yet — no logo_url column exists
   };
 }

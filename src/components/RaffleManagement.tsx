@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Send, Users } from 'lucide-react';
+import { Copy, Check, Send, Users, X } from 'lucide-react';
 
 interface Props {
   raffleTitle: string;
@@ -35,10 +35,19 @@ export default function RaffleManagement({ raffleTitle, raffleSlug, onClose }: P
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-2xl font-bold text-slate-900">Raffle Created Successfully!</h2>
-          <p className="text-slate-600 mt-1">{raffleTitle}</p>
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-slate-200 flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Raffle Created Successfully!</h2>
+            <p className="text-slate-600 mt-1">{raffleTitle}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <div className="p-6 space-y-6">

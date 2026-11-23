@@ -25,12 +25,14 @@ import ParticipantTermsPage from './components/legal/ParticipantTermsPage';
 import TrustSafetyPage from './components/legal/TrustSafetyPage';
 import AdminRoute from './components/AdminRoute';
 import AdminPage from './pages/AdminPage';
+import WelcomePage from './pages/WelcomePage';
 import ResetPassword from './components/ResetPassword';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
+      <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/dashboard" element={<RaffleDashboard />} />
       <Route path="/club/settings" element={<ClubSettingsPage />} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
